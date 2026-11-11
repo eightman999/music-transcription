@@ -18,10 +18,9 @@ Output:
 The slug is a sanitized version of the audio filename (without extension).
 
 Ground truth from MIDI:
-- Note onsets/velocities as recorded
-- For offsets: extend a note to the sustain-pedal release (CC64 >= 64) or to the next
-  onset of the same pitch, whichever comes first.
+- Note onsets/velocities/offsets as recorded (raw key-release offsets)
 - Pedal intervals are stored in the 'pedal' field.
+- sustain_extended() can be used to compute pedal-extended offsets.
 """
 
 import os
@@ -38,6 +37,7 @@ from typing import List, Dict, Tuple, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mt.schema import save_json
+from mt.gt import midi_to_gt
 
 # MAESTRO v3 base URL
 MAESTRO_BASE_URL = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/"
@@ -189,86 +189,12 @@ def extract_member_from_zip(zip_url: str, member_name: str, output_path: str) ->
 def midi_to_ground_truth(midi_path: str) -> Tuple[List[Dict], List[Dict]]:
     """Convert MIDI file to ground truth notes with pedal extension.
     
-    For offsets: extend a note to the sustain-pedal release (CC64 >= 64) or to the
-    next onset of the same pitch, whichever comes first.
-    
-    Returns:
-        Tuple of (notes, pedal_intervals)
+    This function is deprecated. Use mt.gt.midi_to_gt instead.
     """
-    import pretty_midi
-    
-    # Load MIDI
-    pm = pretty_midi.PrettyMIDI(midi_path)
-    
-    # Get all notes from all instruments
-    all_notes = []
-    for instrument in pm.instruments:
-        for note in instrument.notes:
-            all_notes.append({
-                'pitch': note.pitch,
-                'onset': note.start,
-                'offset': note.end,
-                'velocity': note.velocity,
-            })
-    
-    # Sort notes by onset, then pitch
-    all_notes.sort(key=lambda n: (n['onset'], n['pitch']))
-    
-    # Get pedal (sustain) events from control changes
-    pedal_intervals = []
-    pedal_on_times = []
-    
-    for instrument in pm.instruments:
-        for cc in instrument.control_changes:
-            if cc.number == 64:  # Sustain pedal
-                if cc.value >= 64:
-                    pedal_on_times.append(cc.time)
-                else:
-                    # Pedal off - match with most recent on
-                    if pedal_on_times:
-                        onset = pedal_on_times.pop()
-                        pedal_intervals.append({
-                            'onset': onset,
-                            'offset': cc.time,
-                        })
-    
-    # Sort pedal intervals
-    pedal_intervals.sort(key=lambda p: p['onset'])
-    
-    # Extend note offsets based on pedal
-    # For each note, find if it's held by pedal
-    extended_notes = []
-    
-    for note in all_notes:
-        original_offset = note['offset']
-        
-        # Find pedal intervals that cover this note's onset
-        # A note is extended by pedal if:
-        # 1. There's an active pedal at the note's onset
-        # 2. The pedal is released after the note's original offset
-        
-        max_extension = original_offset
-        
-        for pedal in pedal_intervals:
-            # Pedal must start before or at note onset and end after note offset
-            if pedal['onset'] <= note['onset'] and pedal['offset'] > max_extension:
-                max_extension = pedal['offset']
-        
-        # Also check for next onset of same pitch
-        for other_note in all_notes:
-            if other_note['pitch'] == note['pitch'] and other_note['onset'] > note['onset']:
-                if other_note['onset'] < max_extension:
-                    max_extension = other_note['onset']
-                break  # Only need the next one
-        
-        extended_notes.append({
-            'pitch': note['pitch'],
-            'onset': note['onset'],
-            'offset': max_extension,
-            'velocity': note['velocity'],
-        })
-    
-    return extended_notes, pedal_intervals
+    gt = midi_to_gt(midi_path)
+    return gt["notes"], gt["pedal"]
+
+
 
 
 def create_ground_truth_json(
@@ -281,13 +207,13 @@ def create_ground_truth_json(
     original_audio_filename: str,
 ) -> Dict:
     """Create ground truth JSON from MIDI file."""
-    notes, pedal = midi_to_ground_truth(midi_path)
+    gt = midi_to_gt(midi_path)
     
     gt_data = {
         "backend": "ground_truth",
         "audio": wav_path,
-        "notes": notes,
-        "pedal": pedal,
+        "notes": gt["notes"],
+        "pedal": gt["pedal"],
         "meta": {
             "composer": composer,
             "title": title,
@@ -298,6 +224,8 @@ def create_ground_truth_json(
     }
     
     return gt_data
+
+
 
 
 def main():
@@ -350,10 +278,21 @@ def main():
         midi_path = output_dir / f"{slug}.midi"
         gt_json_path = output_dir / f"{slug}.gt.json"
         
-        # Skip if files exist and not forcing
-        if not args.force and wav_path.exists() and midi_path.exists() and gt_json_path.exists():
+        # Skip download if files exist and not forcing
+        if not args.force and wav_path.exists() and midi_path.exists():
             print(f"\nSkipping {slug}: files already exist")
-            # Still add to manifest
+            # Still regenerate gt.json from midi
+            gt_data = create_ground_truth_json(
+                str(wav_path),
+                str(midi_path),
+                composer,
+                title,
+                year,
+                midi_filename,
+                audio_filename,
+            )
+            save_json(gt_data, str(gt_json_path))
+            print(f"  Re-generated ground truth to {gt_json_path}")
             sha256 = compute_sha256(str(wav_path))
             manifest.append({
                 "slug": slug,
@@ -370,6 +309,7 @@ def main():
                 "sha256": sha256,
             })
             continue
+
         
         print(f"\nProcessing {slug}...")
         

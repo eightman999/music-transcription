@@ -1,6 +1,6 @@
-# Evaluation Results: out/synth
+# Evaluation Results: synth
 
-| Clip | Backend | GT Notes | Est Notes | Onset-only (P/R/F1) | Onset+Offset (P/R/F1) | Onset+Velocity (P/R/F1) | RT Factor | Peak RSS | Device | Version |
-|------|---------|----------|-----------|---------------------|----------------------|------------------------|-----------|----------|--------|---------|
-| test | naive | 16 | 16 | 1.000/1.000/1.000 | 1.000/1.000/1.000 | 0.500/0.500/0.500 | 0.18x | 299.0 MB |  |  |
-| **mean** | naive | 16 | 16 | 1.000/1.000/1.000 | 1.000/1.000/1.000 | 0.500/0.500/0.500 | 0.18x | 299.0 MB | | |
+| Clip | Backend | GT | Est | On+Off key (P/R/F1) | On+Off sustained (P/R/F1) | Onset dev (ms) | RT | RSS | Clips |
+|------|---------|----|-----|---------------------|--------------------------|---------------|----|-----|-------|
+| test | naive | 16 | 16 | 1.000/1.000/1.000 | n/a | 5.0 | 0.20x | 300.3 MB | |
+| **mean** | naive | 16 | 16 | 1.000/1.000/1.000 | n/a | 5.0 | 0.20x | 300.3 MB | 1/1 |

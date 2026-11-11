@@ -4,6 +4,7 @@ import numpy as np
 import mir_eval
 from typing import Dict, List, Tuple, Optional
 from mt.schema import load_json
+from mt.gt import sustain_extended
 
 
 def midi_to_hz(pitch: int) -> float:
@@ -175,3 +176,100 @@ def evaluate_onset_velocity(
         "recall": float(recall),
         "f1": float(f1_score),
     }
+
+
+def compute_onset_deviation(
+    reference_notes: List[Dict],
+    estimated_notes: List[Dict],
+    onset_tolerance: float = 0.05,
+) -> Optional[Dict]:
+    """Compute onset timing deviation metrics.
+    
+    With mir_eval.transcription.match_notes (onset 0.05, offset_ratio=None),
+    over the matched pairs compute est_onset - ref_onset.
+    Returns onset_dev_median_ms and onset_dev_mean_abs_ms.
+    
+    Args:
+        reference_notes: Ground truth notes
+        estimated_notes: Detected notes
+        onset_tolerance: Tolerance for onset matching in seconds
+        
+    Returns:
+        Dict with onset_dev_median_ms and onset_dev_mean_abs_ms (in milliseconds)
+        or None if there are no matches
+    """
+    ref_pitches, ref_intervals = notes_to_mir_eval_format(reference_notes)
+    est_pitches, est_intervals = notes_to_mir_eval_format(estimated_notes)
+    
+    if len(ref_intervals) == 0 or len(est_intervals) == 0:
+        return None
+    
+    # Match notes with onset-only matching
+    matched_pairs = mir_eval.transcription.match_notes(
+        ref_intervals,
+        ref_pitches,
+        est_intervals,
+        est_pitches,
+        onset_tolerance=onset_tolerance,
+        offset_ratio=None,
+    )
+    
+    if len(matched_pairs) == 0:
+        return None
+    
+    # Compute deviations in seconds
+    deviations = []
+    for ref_idx, est_idx in matched_pairs:
+        ref_onset = ref_intervals[ref_idx, 0]
+        est_onset = est_intervals[est_idx, 0]
+        deviations.append(float(est_onset - ref_onset))
+    
+    # Convert to milliseconds
+    deviations_ms = [d * 1000.0 for d in deviations]
+    
+    median_ms = float(np.median(deviations_ms))
+    mean_abs_ms = float(np.mean([abs(d) for d in deviations_ms]))
+    
+    return {
+        "onset_dev_median_ms": median_ms,
+        "onset_dev_mean_abs_ms": mean_abs_ms,
+    }
+
+
+def evaluate_onset_offset_sustained(
+    reference_notes: List[Dict],
+    estimated_notes: List[Dict],
+    reference_pedal: Optional[List[Dict]] = None,
+    onset_tolerance: float = 0.05,
+    offset_ratio: float = 0.2,
+    offset_min_tolerance: float = 0.05,
+) -> Optional[Dict]:
+    """Evaluate with onset+offset matching using sustained offsets.
+    
+    If reference_pedal is provided, extends the reference notes using sustain_extended.
+    If reference_pedal is None, returns None.
+    
+    Args:
+        reference_notes: Ground truth notes
+        estimated_notes: Detected notes
+        reference_pedal: Pedal intervals from ground truth (optional)
+        onset_tolerance: Tolerance for onset matching in seconds
+        offset_ratio: Ratio for offset matching
+        offset_min_tolerance: Minimum tolerance for offset matching
+        
+    Returns:
+        Dict with precision, recall, f1_score or None if no pedal data
+    """
+    if reference_pedal is None:
+        return None
+    
+    # Extend reference notes with pedal
+    extended_ref_notes = sustain_extended(reference_notes, reference_pedal)
+    
+    return compute_metrics(
+        extended_ref_notes,
+        estimated_notes,
+        onset_tolerance=onset_tolerance,
+        offset_ratio=offset_ratio,
+        offset_min_tolerance=offset_min_tolerance,
+    )

@@ -11,6 +11,7 @@ import os
 import sys
 import json
 import time
+import hashlib
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
@@ -23,10 +24,80 @@ from mt.schema import load_json
 from mt.evaluate import (
     evaluate_onset_only,
     evaluate_onset_offset,
+    evaluate_onset_offset_sustained,
     evaluate_onset_velocity,
+    compute_onset_deviation,
     midi_to_hz,
 )
 from mt.backends import run_backend, list_backends
+
+
+def compute_sha256(filepath: str) -> str:
+    """Compute SHA256 hash of a file."""
+    sha256 = hashlib.sha256()
+    with open(filepath, 'rb') as f:
+        while True:
+            chunk = f.read(8192)
+            if not chunk:
+                break
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def get_cache_dir(dataset_name: str, backend_name: str) -> Path:
+    """Get the cache directory for a dataset and backend."""
+    return Path("out") / "detect" / dataset_name / backend_name
+
+
+def get_cache_path(dataset_name: str, backend_name: str, clip_name: str) -> Tuple[Path, Path]:
+    """Get the cache paths for a clip.
+    
+    Returns:
+        Tuple of (output_json_path, run_json_path)
+    """
+    cache_dir = get_cache_dir(dataset_name, backend_name)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return (
+        cache_dir / f"{clip_name}.json",
+        cache_dir / f"{clip_name}.run.json",
+    )
+
+
+def save_cache(
+    output_json: str,
+    run_json: str,
+    wav_path: str,
+    wall_time: float,
+    peak_rss_mb: float,
+    real_time_factor: float,
+) -> None:
+    """Save cache files for a backend run."""
+    # Save the output JSON (already exists from run_backend)
+    # Save the run metadata
+    run_data = {
+        "wav_sha256": compute_sha256(wav_path),
+        "wall_time": wall_time,
+        "real_time_factor": real_time_factor,
+        "peak_rss_mb": peak_rss_mb,
+    }
+    with open(run_json, 'w', encoding='utf-8') as f:
+        json.dump(run_data, f, indent=2, ensure_ascii=False)
+
+
+def load_cache_valid(wav_path: str, run_json_path: str) -> bool:
+    """Check if cache is valid for the current wav file."""
+    run_json = Path(run_json_path)
+    if not run_json.exists():
+        return False
+    
+    try:
+        with open(run_json, 'r', encoding='utf-8') as f:
+            run_data = json.load(f)
+        
+        current_sha256 = compute_sha256(wav_path)
+        return run_data.get("wav_sha256") == current_sha256
+    except Exception:
+        return False
 
 
 def sort_notes_by_onset_pitch(notes):
@@ -57,38 +128,43 @@ def evaluate_backend_on_clip(
     backend_name: str,
     wav_path: str,
     gt_json_path: str,
-    tmp_dir: str = "tmp",
+    dataset_name: str,
+    no_cache: bool = False,
 ) -> Dict:
     """Evaluate a single backend on a single clip.
     
+    Args:
+        backend_name: Name of the backend
+        wav_path: Path to WAV file
+        gt_json_path: Path to ground truth JSON
+        dataset_name: Name of the dataset (for cache directory)
+        no_cache: If True, force re-run even if cache exists
+        
     Returns:
         Dict with metrics and timing info
     """
-    os.makedirs(tmp_dir, exist_ok=True)
-    
-    # Generate output path
-    output_json = os.path.join(tmp_dir, f"{backend_name}_{Path(wav_path).stem}.json")
+    clip_name = Path(wav_path).stem
     
     # Load ground truth
     gt_data = load_json(gt_json_path)
     
-    # Run backend
-    start_time = time.time()
-    try:
-        wall_time, peak_rss_mb = run_backend(backend_name, wav_path, output_json)
-        backend_failed = False
-        error_message = None
-    except Exception as e:
-        wall_time = 0
-        peak_rss_mb = 0
-        backend_failed = True
-        error_message = str(e)
-    end_time = time.time()
+    # Check cache
+    cache_json, cache_run = get_cache_path(dataset_name, backend_name, clip_name)
+    use_cache = not no_cache and cache_json.exists() and cache_run.exists() and load_cache_valid(wav_path, str(cache_run))
     
-    # Load estimated notes if backend succeeded
-    if not backend_failed:
+    if use_cache:
+        # Load from cache
+        print(f"    cached")
         try:
-            est_data = load_json(output_json)
+            est_data = load_json(str(cache_json))
+            
+            # Load run metadata
+            with open(str(cache_run), 'r', encoding='utf-8') as f:
+                run_data = json.load(f)
+            
+            wall_time = run_data["wall_time"]
+            peak_rss_mb = run_data["peak_rss_mb"]
+            real_time_factor = run_data["real_time_factor"]
             
             # Sort notes by (onset, pitch) to ensure consistent ordering
             est_data["notes"] = sort_notes_by_onset_pitch(est_data.get("notes", []))
@@ -99,28 +175,72 @@ def evaluate_backend_on_clip(
             device = meta.get("device", "")
             version = meta.get("version", "")
             
-            # Compute metrics
-            metrics_onset = evaluate_onset_only(
-                gt_data["notes"],
-                est_data["notes"],
-                onset_tolerance=0.05,
-            )
+        except Exception as e:
+            return {
+                "clip": clip_name,
+                "backend": backend_name,
+                "num_gt_notes": len(gt_data["notes"]),
+                "num_est_notes": 0,
+                "onset_only": None,
+                "onset_offset": None,
+                "onset_offset_sustained": None,
+                "onset_velocity": None,
+                "onset_dev_median_ms": None,
+                "wall_time": 0,
+                "real_time_factor": 0,
+                "peak_rss_mb": 0,
+                "device": "",
+                "version": "",
+                "failed": True,
+                "error": f"Failed to load cache: {e}",
+            }
+    else:
+        # Run backend
+        start_time = time.time()
+        try:
+            wall_time, peak_rss_mb = run_backend(backend_name, wav_path, str(cache_json))
+            backend_failed = False
+            error_message = None
+        except Exception as e:
+            wall_time = 0
+            peak_rss_mb = 0
+            backend_failed = True
+            error_message = str(e)
+        end_time = time.time()
+        
+        if backend_failed:
+            # Backend failed - return error
+            return {
+                "clip": clip_name,
+                "backend": backend_name,
+                "num_gt_notes": len(gt_data["notes"]),
+                "num_est_notes": 0,
+                "onset_only": None,
+                "onset_offset": None,
+                "onset_offset_sustained": None,
+                "onset_velocity": None,
+                "onset_dev_median_ms": None,
+                "wall_time": wall_time,
+                "real_time_factor": 0,
+                "peak_rss_mb": peak_rss_mb,
+                "device": "",
+                "version": "",
+                "failed": True,
+                "error": error_message,
+            }
+        
+        # Load estimated notes
+        try:
+            est_data = load_json(str(cache_json))
             
-            metrics_onset_offset = evaluate_onset_offset(
-                gt_data["notes"],
-                est_data["notes"],
-                onset_tolerance=0.05,
-                offset_ratio=0.2,
-                offset_min_tolerance=0.05,
-            )
+            # Sort notes by (onset, pitch) to ensure consistent ordering
+            est_data["notes"] = sort_notes_by_onset_pitch(est_data.get("notes", []))
+            num_est_notes = len(est_data["notes"])
             
-            # Compute velocity metrics
-            metrics_onset_velocity = evaluate_onset_velocity(
-                gt_data["notes"],
-                est_data["notes"],
-                onset_tolerance=0.05,
-                velocity_tolerance=0.1,
-            )
+            # Get meta if present
+            meta = est_data.get("meta", {})
+            device = meta.get("device", "")
+            version = meta.get("version", "")
             
             # Calculate real-time factor
             import soundfile as sf
@@ -128,30 +248,20 @@ def evaluate_backend_on_clip(
             audio_duration = len(audio) / fs
             real_time_factor = wall_time / audio_duration if audio_duration > 0 else 0
             
-            return {
-                "clip": Path(wav_path).stem,
-                "backend": backend_name,
-                "num_gt_notes": len(gt_data["notes"]),
-                "num_est_notes": num_est_notes,
-                "onset_only": metrics_onset,
-                "onset_offset": metrics_onset_offset,
-                "onset_velocity": metrics_onset_velocity,
-                "wall_time": wall_time,
-                "real_time_factor": real_time_factor,
-                "peak_rss_mb": peak_rss_mb,
-                "device": device,
-                "version": version,
-                "failed": False,
-                "error": None,
-            }
+            # Save cache
+            save_cache(str(cache_json), str(cache_run), wav_path, wall_time, peak_rss_mb, real_time_factor)
+            
         except Exception as e:
             return {
-                "clip": Path(wav_path).stem,
+                "clip": clip_name,
                 "backend": backend_name,
                 "num_gt_notes": len(gt_data["notes"]),
                 "num_est_notes": 0,
-                "onset_only": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
-                "onset_offset": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
+                "onset_only": None,
+                "onset_offset": None,
+                "onset_offset_sustained": None,
+                "onset_velocity": None,
+                "onset_dev_median_ms": None,
                 "wall_time": wall_time,
                 "real_time_factor": 0,
                 "peak_rss_mb": peak_rss_mb,
@@ -160,43 +270,90 @@ def evaluate_backend_on_clip(
                 "failed": True,
                 "error": f"Failed to load output: {e}",
             }
+    
+    # Compute metrics
+    metrics_onset = evaluate_onset_only(
+        gt_data["notes"],
+        est_data["notes"],
+        onset_tolerance=0.05,
+    )
+    
+    metrics_onset_offset = evaluate_onset_offset(
+        gt_data["notes"],
+        est_data["notes"],
+        onset_tolerance=0.05,
+        offset_ratio=0.2,
+        offset_min_tolerance=0.05,
+    )
+    
+    # Compute sustained offset metrics
+    pedal = gt_data.get("pedal", None)
+    if pedal is not None:
+        metrics_onset_offset_sustained = evaluate_onset_offset_sustained(
+            gt_data["notes"],
+            est_data["notes"],
+            reference_pedal=pedal,
+            onset_tolerance=0.05,
+            offset_ratio=0.2,
+            offset_min_tolerance=0.05,
+        )
     else:
-        # Backend failed
-        return {
-            "clip": Path(wav_path).stem,
-            "backend": backend_name,
-            "num_gt_notes": len(gt_data["notes"]),
-            "num_est_notes": 0,
-            "onset_only": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
-            "onset_offset": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
-            "wall_time": wall_time,
-            "real_time_factor": 0,
-            "peak_rss_mb": peak_rss_mb,
-            "device": "",
-            "version": "",
-            "failed": True,
-            "error": error_message,
-        }
+        metrics_onset_offset_sustained = None
+    
+    # Compute velocity metrics
+    metrics_onset_velocity = evaluate_onset_velocity(
+        gt_data["notes"],
+        est_data["notes"],
+        onset_tolerance=0.05,
+        velocity_tolerance=0.1,
+    )
+    
+    # Compute onset deviation
+    onset_dev = compute_onset_deviation(
+        gt_data["notes"],
+        est_data["notes"],
+        onset_tolerance=0.05,
+    )
+    onset_dev_median_ms = onset_dev["onset_dev_median_ms"] if onset_dev else None
+    
+    return {
+        "clip": clip_name,
+        "backend": backend_name,
+        "num_gt_notes": len(gt_data["notes"]),
+        "num_est_notes": num_est_notes,
+        "onset_only": metrics_onset,
+        "onset_offset": metrics_onset_offset,
+        "onset_offset_sustained": metrics_onset_offset_sustained,
+        "onset_velocity": metrics_onset_velocity,
+        "onset_dev_median_ms": onset_dev_median_ms,
+        "wall_time": wall_time,
+        "real_time_factor": real_time_factor,
+        "peak_rss_mb": peak_rss_mb,
+        "device": device,
+        "version": version,
+        "failed": False,
+        "error": None,
+    }
 
 
 def format_metrics(metrics: Dict) -> str:
     """Format metrics for display."""
-    onset = metrics["onset_only"]
-    onset_offset = metrics["onset_offset"]
-    onset_velocity = metrics.get("onset_velocity", {"precision": 0, "recall": 0, "f1": 0})
+    def fmt_metrics(m):
+        if m is None:
+            return "n/a"
+        return f"{m['precision']:.3f}/{m['recall']:.3f}/{m['f1']:.3f}"
+    
+    def fmt_float(v):
+        if v is None:
+            return "n/a"
+        return f"{v:.1f}"
     
     return (
-        f"{metrics['onset_only']['precision']:.3f} / "
-        f"{metrics['onset_only']['recall']:.3f} / "
-        f"{metrics['onset_only']['f1']:.3f} | "
-        f"{metrics['onset_offset']['precision']:.3f} / "
-        f"{metrics['onset_offset']['recall']:.3f} / "
-        f"{metrics['onset_offset']['f1']:.3f} | "
-        f"{onset_velocity['precision']:.3f} / "
-        f"{onset_velocity['recall']:.3f} / "
-        f"{onset_velocity['f1']:.3f} | "
-        f"{metrics['real_time_factor']:.2f}x | "
-        f"{metrics['peak_rss_mb']:.1f} MB"
+        f"On+Off key: {fmt_metrics(metrics.get('onset_offset'))} | "
+        f"On+Off sustained: {fmt_metrics(metrics.get('onset_offset_sustained'))} | "
+        f"Onset dev: {fmt_float(metrics.get('onset_dev_median_ms'))} ms | "
+        f"RT: {metrics['real_time_factor']:.2f}x | "
+        f"RSS: {metrics['peak_rss_mb']:.1f} MB"
     )
 
 
@@ -209,12 +366,23 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
     # Sort by clip name, then backend
     results = sorted(results, key=lambda r: (r["clip"], r["backend"]))
     
+    # Helper functions for formatting
+    def fmt_metrics(m):
+        if m is None:
+            return "n/a"
+        return f"{m['precision']:.3f}/{m['recall']:.3f}/{m['f1']:.3f}"
+    
+    def fmt_float(v):
+        if v is None:
+            return "n/a"
+        return f"{v:.1f}"
+    
     # Build table
     table_lines = []
     
     # Header
-    table_lines.append("| Clip | Backend | GT Notes | Est Notes | Onset-only (P/R/F1) | Onset+Offset (P/R/F1) | Onset+Velocity (P/R/F1) | RT Factor | Peak RSS | Device | Version |")
-    table_lines.append("|------|---------|----------|-----------|---------------------|----------------------|------------------------|-----------|----------|--------|---------|")
+    table_lines.append("| Clip | Backend | GT | Est | On+Off key (P/R/F1) | On+Off sustained (P/R/F1) | Onset dev (ms) | RT | RSS | Clips |")
+    table_lines.append("|------|---------|----|-----|---------------------|--------------------------|---------------|----|-----|-------|")
     
     # Rows
     for r in results:
@@ -224,30 +392,20 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
         num_est = r["num_est_notes"]
         
         if r["failed"]:
-            # Failed run
+            # Failed run - show error but don't include in mean
             error_msg = r["error"] if r["error"] else "Unknown error"
             table_lines.append(
-                f"| {clip} | {backend} | {num_gt} | FAILED | FAILED | FAILED | FAILED | - | - | - | - |"
+                f"| {clip} | {backend} | {num_gt} | FAILED | n/a | n/a | n/a | - | - | error |"
             )
-            table_lines.append(f"| | | | | Error: {error_msg} | | | | | | |")
         else:
-            onset = r["onset_only"]
-            onset_str = f"{onset['precision']:.3f}/{onset['recall']:.3f}/{onset['f1']:.3f}"
-            
-            onset_offset = r["onset_offset"]
-            onset_offset_str = f"{onset_offset['precision']:.3f}/{onset_offset['recall']:.3f}/{onset_offset['f1']:.3f}"
-            
-            onset_velocity = r.get("onset_velocity", {"precision": 0, "recall": 0, "f1": 0})
-            onset_velocity_str = f"{onset_velocity['precision']:.3f}/{onset_velocity['recall']:.3f}/{onset_velocity['f1']:.3f}"
-            
+            onset_offset_str = fmt_metrics(r.get("onset_offset"))
+            onset_offset_sustained_str = fmt_metrics(r.get("onset_offset_sustained"))
+            onset_dev_str = fmt_float(r.get("onset_dev_median_ms"))
             rt_factor = f"{r['real_time_factor']:.2f}x"
             peak_rss = f"{r['peak_rss_mb']:.1f} MB"
-            device = r.get("device", "")
-            version = r.get("version", "")
             
             table_lines.append(
-                f"| {clip} | {backend} | {num_gt} | {num_est} | {onset_str} | {onset_offset_str} | {onset_velocity_str} | {rt_factor} | {peak_rss} | {device} | {version} |"
-            )
+                f"| {clip} | {backend} | {num_gt} | {num_est} | {onset_offset_str} | {onset_offset_sustained_str} | {onset_dev_str} | {rt_factor} | {peak_rss} | |")
     
     # Mean row per backend (only for successful runs)
     successful_results = [r for r in results if not r["failed"]]
@@ -257,32 +415,45 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
         for backend in sorted(backends):
             backend_results = [r for r in successful_results if r["backend"] == backend]
             
-            mean_onset_p = np.mean([r["onset_only"]["precision"] for r in backend_results])
-            mean_onset_r = np.mean([r["onset_only"]["recall"] for r in backend_results])
-            mean_onset_f1 = np.mean([r["onset_only"]["f1"] for r in backend_results])
+            # Onset+offset metrics (key release)
+            onset_offset_p = [r["onset_offset"]["precision"] for r in backend_results if r["onset_offset"] is not None]
+            onset_offset_r = [r["onset_offset"]["recall"] for r in backend_results if r["onset_offset"] is not None]
+            onset_offset_f1 = [r["onset_offset"]["f1"] for r in backend_results if r["onset_offset"] is not None]
             
-            mean_onset_offset_p = np.mean([r["onset_offset"]["precision"] for r in backend_results])
-            mean_onset_offset_r = np.mean([r["onset_offset"]["recall"] for r in backend_results])
-            mean_onset_offset_f1 = np.mean([r["onset_offset"]["f1"] for r in backend_results])
+            # Onset+offset sustained metrics
+            onset_offset_sustained_p = [r["onset_offset_sustained"]["precision"] for r in backend_results if r.get("onset_offset_sustained") is not None]
+            onset_offset_sustained_r = [r["onset_offset_sustained"]["recall"] for r in backend_results if r.get("onset_offset_sustained") is not None]
+            onset_offset_sustained_f1 = [r["onset_offset_sustained"]["f1"] for r in backend_results if r.get("onset_offset_sustained") is not None]
             
-            # Velocity metrics
-            mean_velocity_p = np.mean([r.get("onset_velocity", {"precision": 0})["precision"] for r in backend_results])
-            mean_velocity_r = np.mean([r.get("onset_velocity", {"recall": 0})["recall"] for r in backend_results])
-            mean_velocity_f1 = np.mean([r.get("onset_velocity", {"f1": 0})["f1"] for r in backend_results])
+            # Onset deviation
+            onset_dev_values = [r["onset_dev_median_ms"] for r in backend_results if r.get("onset_dev_median_ms") is not None]
+            
+            mean_onset_offset_str = fmt_metrics({
+                "precision": np.mean(onset_offset_p) if onset_offset_p else 0,
+                "recall": np.mean(onset_offset_r) if onset_offset_r else 0,
+                "f1": np.mean(onset_offset_f1) if onset_offset_f1 else 0,
+            }) if onset_offset_p else "n/a"
+            
+            mean_onset_offset_sustained_str = fmt_metrics({
+                "precision": np.mean(onset_offset_sustained_p) if onset_offset_sustained_p else 0,
+                "recall": np.mean(onset_offset_sustained_r) if onset_offset_sustained_r else 0,
+                "f1": np.mean(onset_offset_sustained_f1) if onset_offset_sustained_f1 else 0,
+            }) if onset_offset_sustained_p else "n/a"
+            
+            mean_onset_dev_str = fmt_float(np.mean(onset_dev_values)) if onset_dev_values else "n/a"
             
             mean_rt = np.mean([r["real_time_factor"] for r in backend_results])
             mean_rss = np.mean([r["peak_rss_mb"] for r in backend_results])
             
-            mean_onset_str = f"{mean_onset_p:.3f}/{mean_onset_r:.3f}/{mean_onset_f1:.3f}"
-            mean_onset_offset_str = f"{mean_onset_offset_p:.3f}/{mean_onset_offset_r:.3f}/{mean_onset_offset_f1:.3f}"
-            mean_velocity_str = f"{mean_velocity_p:.3f}/{mean_velocity_r:.3f}/{mean_velocity_f1:.3f}"
-            
             mean_num_gt = int(np.mean([r["num_gt_notes"] for r in backend_results]))
             mean_num_est = int(np.mean([r["num_est_notes"] for r in backend_results]))
             
+            # Count total clips for this backend
+            total_clips = len([r for r in results if r["backend"] == backend])
+            ok_clips = len(backend_results)
+            
             table_lines.append(
-                f"| **mean** | {backend} | {mean_num_gt} | {mean_num_est} | {mean_onset_str} | {mean_onset_offset_str} | {mean_velocity_str} | {mean_rt:.2f}x | {mean_rss:.1f} MB | | |"
-            )
+                f"| **mean** | {backend} | {mean_num_gt} | {mean_num_est} | {mean_onset_offset_str} | {mean_onset_offset_sustained_str} | {mean_onset_dev_str} | {mean_rt:.2f}x | {mean_rss:.1f} MB | {ok_clips}/{total_clips} |")
     
     table = "\n".join(table_lines)
     
@@ -336,6 +507,8 @@ def main():
                         help="Comma-separated list of backend names")
     parser.add_argument("--output-dir", type=str, default="results", 
                         help="Output directory for results")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Force re-run backends, ignoring cache")
     args = parser.parse_args()
     
     # Parse backends
@@ -362,6 +535,9 @@ def main():
     # Run evaluation
     all_results = []
     
+    # Get dataset basename for cache directory
+    dataset_basename = os.path.basename(dataset_path)
+    
     for clip_name, wav_path, gt_json_path in clips:
         print(f"\nProcessing clip: {clip_name}")
         
@@ -373,6 +549,8 @@ def main():
                     backend_name,
                     wav_path,
                     gt_json_path,
+                    dataset_basename,
+                    no_cache=args.no_cache,
                 )
                 all_results.append(result)
                 
@@ -389,8 +567,11 @@ def main():
                     "backend": backend_name,
                     "num_gt_notes": 0,
                     "num_est_notes": 0,
-                    "onset_only": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
-                    "onset_offset": {"precision": 0.0, "recall": 0.0, "f1": 0.0},
+                    "onset_only": None,
+                    "onset_offset": None,
+                    "onset_offset_sustained": None,
+                    "onset_velocity": None,
+                    "onset_dev_median_ms": None,
                     "wall_time": 0,
                     "real_time_factor": 0,
                     "peak_rss_mb": 0,

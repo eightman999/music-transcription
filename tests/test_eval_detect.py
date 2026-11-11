@@ -121,6 +121,8 @@ class TestPrintMarkdownTable:
                 "num_est_notes": 8,
                 "onset_only": {"precision": 0.8, "recall": 0.8, "f1": 0.8},
                 "onset_offset": {"precision": 0.7, "recall": 0.7, "f1": 0.7},
+                "onset_offset_sustained": {"precision": 0.75, "recall": 0.75, "f1": 0.75},
+                "onset_dev_median_ms": 5.0,
                 "wall_time": 1.0,
                 "real_time_factor": 1.0,
                 "peak_rss_mb": 100.0,
@@ -136,6 +138,8 @@ class TestPrintMarkdownTable:
                 "num_est_notes": 9,
                 "onset_only": {"precision": 0.9, "recall": 0.9, "f1": 0.9},
                 "onset_offset": {"precision": 0.8, "recall": 0.8, "f1": 0.8},
+                "onset_offset_sustained": {"precision": 0.85, "recall": 0.85, "f1": 0.85},
+                "onset_dev_median_ms": 6.0,
                 "wall_time": 1.0,
                 "real_time_factor": 1.0,
                 "peak_rss_mb": 100.0,
@@ -151,6 +155,8 @@ class TestPrintMarkdownTable:
                 "num_est_notes": 5,
                 "onset_only": {"precision": 0.5, "recall": 0.5, "f1": 0.5},
                 "onset_offset": {"precision": 0.4, "recall": 0.4, "f1": 0.4},
+                "onset_offset_sustained": {"precision": 0.45, "recall": 0.45, "f1": 0.45},
+                "onset_dev_median_ms": 10.0,
                 "wall_time": 1.0,
                 "real_time_factor": 1.0,
                 "peak_rss_mb": 200.0,
@@ -167,11 +173,11 @@ class TestPrintMarkdownTable:
         assert "**mean** | backend_a" in table
         assert "**mean** | backend_b" in table
         
-        # Check that backend_a mean is 0.85 (average of 0.8 and 0.9)
-        # and backend_b mean is 0.5
+        # Check that backend_a mean onset_offset is 0.75 (average of 0.7 and 0.8)
+        # and backend_b mean onset_offset is 0.4
         # The table should show these values
-        assert "0.850/0.850/0.850" in table  # backend_a mean
-        assert "0.500/0.500/0.500" in table  # backend_b mean
+        assert "0.750/0.750/0.750" in table  # backend_a mean onset_offset
+        assert "0.400/0.400/0.400" in table  # backend_b mean onset_offset
 
 
 class TestDatasetPathBasename:
@@ -231,7 +237,7 @@ class TestBackendFailureHandling:
                 "nonexistent_backend",
                 wav_path,
                 gt_path,
-                tmp_dir=tmpdir,
+                "test_dataset",
             )
             
             assert result["failed"] is True
