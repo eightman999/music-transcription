@@ -1,0 +1,25 @@
+[
+  {
+    "clip": "test",
+    "backend": "naive",
+    "num_gt_notes": 16,
+    "num_est_notes": 16,
+    "onset_only": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "onset_offset": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "wall_time": 1.2409539222717285,
+    "real_time_factor": 0.19091598804180437,
+    "peak_rss_mb": 298.375,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  }
+]

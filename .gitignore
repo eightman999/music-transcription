@@ -32,7 +32,13 @@ ENV/
 # Data and outputs
 data/
 out/
-results/
+
+# Temporary files
+tmp/
+
+# UV cache
+.uv-cache/
+backends/*/.uv_cache/
 
 # RDSH logs
 .rdsh/logs/

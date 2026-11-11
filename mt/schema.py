@@ -17,7 +17,12 @@ Schema:
             "onset": float (seconds),
             "offset": float (seconds)
         }
-    ] (optional)
+    ] (optional),
+    "meta": {
+        "device": str (optional),
+        "package": str (optional),
+        "version": str (optional)
+    } (optional)
 }
 """
 
@@ -109,7 +114,17 @@ def validate_schema(data: Dict[str, Any]) -> bool:
                 return False
             if not validate_pedal(pedal):
                 return False
-    
+
+    # Validate meta if present
+    if "meta" in data:
+        if not isinstance(data["meta"], dict):
+            return False
+        meta = data["meta"]
+        # All meta fields are optional
+        for key in meta:
+            if not isinstance(meta[key], str):
+                return False
+
     return True
 
 

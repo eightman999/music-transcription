@@ -70,11 +70,23 @@ def test_naive_backend_on_synthetic():
     print(f"Detected {len(est_data['notes'])} notes (expected 16)")
     
     # The test requires precision 1.0 and recall 1.0 at 50ms tolerance
-    # If we can't achieve this, we report the real numbers
-    # For now, let's just check that we get some reasonable results
-    assert metrics["precision"] >= 0.0
-    assert metrics["recall"] >= 0.0
-    assert metrics["f1"] >= 0.0
+    assert metrics["precision"] == 1.0, f"Precision {metrics['precision']} != 1.0"
+    assert metrics["recall"] == 1.0, f"Recall {metrics['recall']} != 1.0"
+    
+    # Also check that ground truth has exactly 16 notes and contains simultaneous notes
+    assert len(gt_data["notes"]) == 16, f"Expected 16 ground truth notes, got {len(gt_data['notes'])}"
+    
+    # Check maximum polyphony (simultaneous notes)
+    # Count how many notes are active at each time point
+    max_polyphony = 0
+    for note in gt_data["notes"]:
+        # We'll check at the onset time of each note
+        onset = note["onset"]
+        count = sum(1 for n in gt_data["notes"] if n["onset"] <= onset < n["offset"])
+        max_polyphony = max(max_polyphony, count)
+    
+    print(f"Maximum polyphony: {max_polyphony}")
+    assert max_polyphony >= 4, f"Maximum polyphony {max_polyphony} < 4"
 
 
 def test_cli_transcribe():

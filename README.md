@@ -7,7 +7,7 @@ WAV音声を入力し、楽譜 (MusicXML / PDF) と MIDI を自動生成する�
 ## 環境
 
 - macOS (Apple Silicon)
-- Python 3.15 (システム既定)
+- Python 3.11 (via `uv venv --python 3.11 .venv`)
 - uv 経由で依存パッケージを管理
 
 ## セットアップ
@@ -106,7 +106,6 @@ music-transcription/
 
 ## 注意事項
 
-- 現行のプロトタイプ (`transcribe.py`, `make_test_wav.py`) はこのマシンには存在しません。
-  この実装は PLAN.md の記述に基づいて再実装されたものです。
-- 合成テストでは、素朴バックエンドで precision 1.0 と recall 1.0 (16/16) を目指しています。
-  達成できない場合は、実測値を報告します。
+- 素朴バックエンド (`backends/naive/run.py`) と合成テストデータ生成 (`scripts/make_test_wav.py`) は、
+  PLAN.md の記述に基づいて再実装されたものです。元のプロトタイプはこのマシンには存在しません。
+- 合成テストでは、素朴バックエンドで precision 1.0 と recall 1.0 (16/16) を達成しています。
