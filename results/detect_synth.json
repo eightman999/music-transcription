@@ -14,9 +14,14 @@
       "recall": 1.0,
       "f1": 1.0
     },
-    "wall_time": 1.2409539222717285,
-    "real_time_factor": 0.19091598804180437,
-    "peak_rss_mb": 298.375,
+    "onset_velocity": {
+      "precision": 0.5,
+      "recall": 0.5,
+      "f1": 0.5
+    },
+    "wall_time": 1.186211109161377,
+    "real_time_factor": 0.182494016794058,
+    "peak_rss_mb": 299.0,
     "device": "",
     "version": "",
     "failed": false,
