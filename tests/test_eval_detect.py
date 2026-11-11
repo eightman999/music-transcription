@@ -122,6 +122,7 @@ class TestPrintMarkdownTable:
                 "onset_only": {"precision": 0.8, "recall": 0.8, "f1": 0.8},
                 "onset_offset": {"precision": 0.7, "recall": 0.7, "f1": 0.7},
                 "onset_offset_sustained": {"precision": 0.75, "recall": 0.75, "f1": 0.75},
+                "onset_velocity": {"precision": 0.72, "recall": 0.72, "f1": 0.72},
                 "onset_dev_median_ms": 5.0,
                 "wall_time": 1.0,
                 "real_time_factor": 1.0,
@@ -139,6 +140,7 @@ class TestPrintMarkdownTable:
                 "onset_only": {"precision": 0.9, "recall": 0.9, "f1": 0.9},
                 "onset_offset": {"precision": 0.8, "recall": 0.8, "f1": 0.8},
                 "onset_offset_sustained": {"precision": 0.85, "recall": 0.85, "f1": 0.85},
+                "onset_velocity": {"precision": 0.82, "recall": 0.82, "f1": 0.82},
                 "onset_dev_median_ms": 6.0,
                 "wall_time": 1.0,
                 "real_time_factor": 1.0,
@@ -156,6 +158,7 @@ class TestPrintMarkdownTable:
                 "onset_only": {"precision": 0.5, "recall": 0.5, "f1": 0.5},
                 "onset_offset": {"precision": 0.4, "recall": 0.4, "f1": 0.4},
                 "onset_offset_sustained": {"precision": 0.45, "recall": 0.45, "f1": 0.45},
+                "onset_velocity": {"precision": 0.42, "recall": 0.42, "f1": 0.42},
                 "onset_dev_median_ms": 10.0,
                 "wall_time": 1.0,
                 "real_time_factor": 1.0,
@@ -178,6 +181,89 @@ class TestPrintMarkdownTable:
         # The table should show these values
         assert "0.750/0.750/0.750" in table  # backend_a mean onset_offset
         assert "0.400/0.400/0.400" in table  # backend_b mean onset_offset
+    
+    def test_table_header_contains_all_columns(self):
+        """Test that the table header contains all required columns."""
+        results = []
+        table = print_markdown_table(results, "test_dataset")
+        
+        # Check that the header contains all required column names
+        required_columns = [
+            "Clip",
+            "Backend",
+            "GT",
+            "Est",
+            "Onset-only (P/R/F1)",
+            "On+Off key (P/R/F1)",
+            "On+Off sustained (P/R/F1)",
+            "Onset+Velocity (P/R/F1)",
+            "Onset dev (ms)",
+            "RT",
+            "RSS",
+            "Device",
+            "Version",
+            "Clips"
+        ]
+        
+        # The header is the first line after the title
+        lines = table.split('\n')
+        # Skip the title line (starts with #) and empty lines
+        header_line = None
+        for line in lines:
+            if line.startswith('|') and 'Clip' in line:
+                header_line = line
+                break
+        
+        assert header_line is not None, "Header line not found"
+        
+        for col in required_columns:
+            assert col in header_line, f"Column '{col}' not found in header: {header_line}"
+    
+    def test_mean_row_carries_onset_only_mean(self):
+        """Test that the mean row carries the onset-only mean."""
+        results = [
+            {
+                "clip": "clip1",
+                "backend": "backend_a",
+                "num_gt_notes": 10,
+                "num_est_notes": 8,
+                "onset_only": {"precision": 0.8, "recall": 0.8, "f1": 0.8},
+                "onset_offset": {"precision": 0.7, "recall": 0.7, "f1": 0.7},
+                "onset_offset_sustained": {"precision": 0.75, "recall": 0.75, "f1": 0.75},
+                "onset_velocity": {"precision": 0.72, "recall": 0.72, "f1": 0.72},
+                "onset_dev_median_ms": 5.0,
+                "wall_time": 1.0,
+                "real_time_factor": 1.0,
+                "peak_rss_mb": 100.0,
+                "device": "",
+                "version": "",
+                "failed": False,
+                "error": None,
+            },
+            {
+                "clip": "clip2",
+                "backend": "backend_a",
+                "num_gt_notes": 10,
+                "num_est_notes": 9,
+                "onset_only": {"precision": 0.9, "recall": 0.9, "f1": 0.9},
+                "onset_offset": {"precision": 0.8, "recall": 0.8, "f1": 0.8},
+                "onset_offset_sustained": {"precision": 0.85, "recall": 0.85, "f1": 0.85},
+                "onset_velocity": {"precision": 0.82, "recall": 0.82, "f1": 0.82},
+                "onset_dev_median_ms": 6.0,
+                "wall_time": 1.0,
+                "real_time_factor": 1.0,
+                "peak_rss_mb": 100.0,
+                "device": "",
+                "version": "",
+                "failed": False,
+                "error": None,
+            },
+        ]
+        
+        table = print_markdown_table(results, "test_dataset")
+        
+        # Check that the mean row contains the onset-only mean (0.85 = average of 0.8 and 0.9)
+        assert "0.850/0.850/0.850" in table  # backend_a mean onset_only
 
 
 class TestDatasetPathBasename:
@@ -233,11 +319,14 @@ class TestBackendFailureHandling:
             
             # Try to evaluate with a non-existent backend
             # This should return a failed result, not crash
+            # Use a temporary cache directory
+            cache_tmpdir = os.path.join(tmpdir, "cache")
             result = evaluate_backend_on_clip(
                 "nonexistent_backend",
                 wav_path,
                 gt_path,
                 "test_dataset",
+                cache_dir=cache_tmpdir,
             )
             
             assert result["failed"] is True

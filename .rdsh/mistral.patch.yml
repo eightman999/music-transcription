@@ -1,0 +1,28 @@
+# rdsh headless に Mistral を重ねる overlay。
+# 使い方: rdsh headless --patch .rdsh/mistral.patch.yml "task"
+# 鍵は ~/.dsh の資格情報から MISTRAL_API_KEY として解決される。値はここに書かない。
+- id: llm-pi-ai
+  config:
+    providers:
+      mistral:
+        displayName: Mistral
+        apiKeyEnv: MISTRAL_API_KEY
+        api: openai-completions
+        baseURL: https://api.mistral.ai/v1
+        compat:
+          supportsStore: false
+          supportsUsageInStreaming: false
+          maxTokensField: max_tokens
+          supportsDeveloperRole: false
+        models:
+          - id: mistral-vibe-cli-latest
+          - id: mistral-large-latest
+          - id: mistral-medium-latest
+- id: agent-default-model
+  config:
+    provider: mistral
+    model: mistral-vibe-cli-latest
+# 既定 60 秒では pip install やモデル推論が打ち切られるため延長する（サンドボックス自体は workspace-write のまま）。
+- id: bash-sandbox
+  config:
+    timeoutMs: 900000

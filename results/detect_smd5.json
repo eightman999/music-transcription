@@ -1,0 +1,682 @@
+[
+  {
+    "clip": "Beethoven_Op027No1-02_003_20090916-SMD",
+    "backend": "naive",
+    "num_gt_notes": 838,
+    "num_est_notes": 131,
+    "onset_only": {
+      "precision": 0.7557251908396947,
+      "recall": 0.11813842482100238,
+      "f1": 0.2043343653250774
+    },
+    "onset_offset": {
+      "precision": 0.1450381679389313,
+      "recall": 0.022673031026252982,
+      "f1": 0.0392156862745098
+    },
+    "onset_offset_sustained": {
+      "precision": 0.12213740458015267,
+      "recall": 0.01909307875894988,
+      "f1": 0.03302373581011352
+    },
+    "onset_velocity": {
+      "precision": 0.40458015267175573,
+      "recall": 0.06324582338902147,
+      "f1": 0.10939112487100103
+    },
+    "onset_dev_median_ms": 15.036848072554676,
+    "wall_time": 3.5857269763946533,
+    "real_time_factor": 0.020373448729515076,
+    "peak_rss_mb": 4723.84375,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Beethoven_Op027No1-02_003_20090916-SMD",
+    "backend": "basic_pitch",
+    "num_gt_notes": 838,
+    "num_est_notes": 935,
+    "onset_only": {
+      "precision": 0.732620320855615,
+      "recall": 0.8174224343675418,
+      "f1": 0.7727016356457981
+    },
+    "onset_offset": {
+      "precision": 0.15080213903743314,
+      "recall": 0.16825775656324582,
+      "f1": 0.15905245346869712
+    },
+    "onset_offset_sustained": {
+      "precision": 0.44919786096256686,
+      "recall": 0.5011933174224343,
+      "f1": 0.47377326565143824
+    },
+    "onset_velocity": {
+      "precision": 0.2716577540106952,
+      "recall": 0.3031026252983294,
+      "f1": 0.28652002256063175
+    },
+    "onset_dev_median_ms": 10.074943310669937,
+    "wall_time": 6.218217849731445,
+    "real_time_factor": 0.03533078323711048,
+    "peak_rss_mb": 507.65625,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Beethoven_Op027No1-02_003_20090916-SMD",
+    "backend": "kong",
+    "num_gt_notes": 838,
+    "num_est_notes": 829,
+    "onset_only": {
+      "precision": 0.9794933655006032,
+      "recall": 0.9689737470167065,
+      "f1": 0.9742051589682064
+    },
+    "onset_offset": {
+      "precision": 0.18938480096501809,
+      "recall": 0.1873508353221957,
+      "f1": 0.18836232753449308
+    },
+    "onset_offset_sustained": {
+      "precision": 0.8636911942098915,
+      "recall": 0.8544152744630071,
+      "f1": 0.8590281943611278
+    },
+    "onset_velocity": {
+      "precision": 0.902291917973462,
+      "recall": 0.8926014319809069,
+      "f1": 0.8974205158968206
+    },
+    "onset_dev_median_ms": 8.070755004883523,
+    "wall_time": 65.32820987701416,
+    "real_time_factor": 0.3711830106648532,
+    "peak_rss_mb": 2067.359375,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Beethoven_Op027No1-02_003_20090916-SMD",
+    "backend": "transkun",
+    "num_gt_notes": 838,
+    "num_est_notes": 828,
+    "onset_only": {
+      "precision": 1.0,
+      "recall": 0.9880668257756563,
+      "f1": 0.9939975990396159
+    },
+    "onset_offset": {
+      "precision": 0.6932367149758454,
+      "recall": 0.684964200477327,
+      "f1": 0.6890756302521007
+    },
+    "onset_offset_sustained": {
+      "precision": 0.23309178743961353,
+      "recall": 0.23031026252983294,
+      "f1": 0.23169267707082836
+    },
+    "onset_velocity": {
+      "precision": 0.964975845410628,
+      "recall": 0.9534606205250596,
+      "f1": 0.9591836734693877
+    },
+    "onset_dev_median_ms": 11.458333333330017,
+    "wall_time": 20.104789972305298,
+    "real_time_factor": 0.1142317612062801,
+    "peak_rss_mb": 817.640625,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Brahms_Op010No1_003_20090916-SMD",
+    "backend": "naive",
+    "num_gt_notes": 1644,
+    "num_est_notes": 307,
+    "onset_only": {
+      "precision": 0.7003257328990228,
+      "recall": 0.1307785888077859,
+      "f1": 0.2203997949769349
+    },
+    "onset_offset": {
+      "precision": 0.1270358306188925,
+      "recall": 0.023722627737226276,
+      "f1": 0.03997949769349051
+    },
+    "onset_offset_sustained": {
+      "precision": 0.14332247557003258,
+      "recall": 0.0267639902676399,
+      "f1": 0.0451050743208611
+    },
+    "onset_velocity": {
+      "precision": 0.5928338762214984,
+      "recall": 0.11070559610705596,
+      "f1": 0.18657098923628906
+    },
+    "onset_dev_median_ms": 9.190759637192514,
+    "wall_time": 5.2512969970703125,
+    "real_time_factor": 0.017388400652550703,
+    "peak_rss_mb": 6515.953125,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Brahms_Op010No1_003_20090916-SMD",
+    "backend": "basic_pitch",
+    "num_gt_notes": 1644,
+    "num_est_notes": 1772,
+    "onset_only": {
+      "precision": 0.6269751693002258,
+      "recall": 0.6757907542579076,
+      "f1": 0.6504683840749415
+    },
+    "onset_offset": {
+      "precision": 0.09029345372460497,
+      "recall": 0.09732360097323602,
+      "f1": 0.0936768149882904
+    },
+    "onset_offset_sustained": {
+      "precision": 0.286117381489842,
+      "recall": 0.3083941605839416,
+      "f1": 0.2968384074941452
+    },
+    "onset_velocity": {
+      "precision": 0.1879232505643341,
+      "recall": 0.20255474452554745,
+      "f1": 0.19496487119437939
+    },
+    "onset_dev_median_ms": 0.3119047619009052,
+    "wall_time": 6.992672920227051,
+    "real_time_factor": 0.023154546093467055,
+    "peak_rss_mb": 671.046875,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Brahms_Op010No1_003_20090916-SMD",
+    "backend": "kong",
+    "num_gt_notes": 1644,
+    "num_est_notes": 1677,
+    "onset_only": {
+      "precision": 0.9487179487179487,
+      "recall": 0.9677615571776156,
+      "f1": 0.9581451370069255
+    },
+    "onset_offset": {
+      "precision": 0.1383422778771616,
+      "recall": 0.1411192214111922,
+      "f1": 0.13971695272508278
+    },
+    "onset_offset_sustained": {
+      "precision": 0.7960644007155635,
+      "recall": 0.8120437956204379,
+      "f1": 0.8039747064137309
+    },
+    "onset_velocity": {
+      "precision": 0.8920691711389386,
+      "recall": 0.9099756690997567,
+      "f1": 0.9009334537789823
+    },
+    "onset_dev_median_ms": -1.4185587565123114,
+    "wall_time": 97.6202940940857,
+    "real_time_factor": 0.3232460069340586,
+    "peak_rss_mb": 2217.96875,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Brahms_Op010No1_003_20090916-SMD",
+    "backend": "transkun",
+    "num_gt_notes": 1644,
+    "num_est_notes": 1617,
+    "onset_only": {
+      "precision": 0.9993815708101422,
+      "recall": 0.9829683698296837,
+      "f1": 0.9911070223857712
+    },
+    "onset_offset": {
+      "precision": 0.6802721088435374,
+      "recall": 0.6690997566909975,
+      "f1": 0.6746396810794235
+    },
+    "onset_offset_sustained": {
+      "precision": 0.20717377860235003,
+      "recall": 0.2037712895377129,
+      "f1": 0.20545844832873353
+    },
+    "onset_velocity": {
+      "precision": 0.969078540507112,
+      "recall": 0.9531630170316302,
+      "f1": 0.9610548911376878
+    },
+    "onset_dev_median_ms": 1.5625000000056843,
+    "wall_time": 22.85715413093567,
+    "real_time_factor": 0.07568594083091282,
+    "peak_rss_mb": 965.296875,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bartok_SZ080-01_002_20110315-SMD",
+    "backend": "naive",
+    "num_gt_notes": 3941,
+    "num_est_notes": 646,
+    "onset_only": {
+      "precision": 0.718266253869969,
+      "recall": 0.11773661507231667,
+      "f1": 0.20231087856987137
+    },
+    "onset_offset": {
+      "precision": 0.04643962848297214,
+      "recall": 0.0076122811469170265,
+      "f1": 0.013080444735120995
+    },
+    "onset_offset_sustained": {
+      "precision": 0.13777089783281735,
+      "recall": 0.022583100735853845,
+      "f1": 0.03880531938085895
+    },
+    "onset_velocity": {
+      "precision": 0.5820433436532507,
+      "recall": 0.09540725704136006,
+      "f1": 0.16394157401351644
+    },
+    "onset_dev_median_ms": 11.08276643989825,
+    "wall_time": 4.3898701667785645,
+    "real_time_factor": 0.01541278760894096,
+    "peak_rss_mb": 7676.34375,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bartok_SZ080-01_002_20110315-SMD",
+    "backend": "basic_pitch",
+    "num_gt_notes": 3941,
+    "num_est_notes": 2519,
+    "onset_only": {
+      "precision": 0.832473203652243,
+      "recall": 0.5320984521695001,
+      "f1": 0.6492260061919505
+    },
+    "onset_offset": {
+      "precision": 0.07344184200079397,
+      "recall": 0.04694240040598833,
+      "f1": 0.05727554179566563
+    },
+    "onset_offset_sustained": {
+      "precision": 0.1722905915045653,
+      "recall": 0.11012433392539965,
+      "f1": 0.1343653250773994
+    },
+    "onset_velocity": {
+      "precision": 0.44779674473997616,
+      "recall": 0.2862217711240802,
+      "f1": 0.34922600619195043
+    },
+    "onset_dev_median_ms": 7.747619047606236,
+    "wall_time": 7.787282943725586,
+    "real_time_factor": 0.02734106784539564,
+    "peak_rss_mb": 648.484375,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bartok_SZ080-01_002_20110315-SMD",
+    "backend": "kong",
+    "num_gt_notes": 3941,
+    "num_est_notes": 3889,
+    "onset_only": {
+      "precision": 0.8932887631781949,
+      "recall": 0.8815021568129916,
+      "f1": 0.8873563218390804
+    },
+    "onset_offset": {
+      "precision": 0.5728979172023656,
+      "recall": 0.5653387465110378,
+      "f1": 0.5690932311621966
+    },
+    "onset_offset_sustained": {
+      "precision": 0.7778349190023143,
+      "recall": 0.7675716823141334,
+      "f1": 0.7726692209450831
+    },
+    "onset_velocity": {
+      "precision": 0.8410902545641553,
+      "recall": 0.8299923877188531,
+      "f1": 0.8355044699872287
+    },
+    "onset_dev_median_ms": -0.1589457193986732,
+    "wall_time": 92.38478016853333,
+    "real_time_factor": 0.32436198359853,
+    "peak_rss_mb": 2188.296875,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bartok_SZ080-01_002_20110315-SMD",
+    "backend": "transkun",
+    "num_gt_notes": 3941,
+    "num_est_notes": 3703,
+    "onset_only": {
+      "precision": 0.9940588711855253,
+      "recall": 0.9340268967267191,
+      "f1": 0.9631083202511774
+    },
+    "onset_offset": {
+      "precision": 0.9227653254118282,
+      "recall": 0.8670388226338492,
+      "f1": 0.8940345368916797
+    },
+    "onset_offset_sustained": {
+      "precision": 0.7159060221442074,
+      "recall": 0.6726719106825679,
+      "f1": 0.6936159079016222
+    },
+    "onset_velocity": {
+      "precision": 0.9721847150958682,
+      "recall": 0.9134737376300431,
+      "f1": 0.9419152276295134
+    },
+    "onset_dev_median_ms": 0.0,
+    "wall_time": 22.31246519088745,
+    "real_time_factor": 0.07833882870194317,
+    "peak_rss_mb": 953.203125,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Chopin_Op010-03_007_20100611-SMD",
+    "backend": "naive",
+    "num_gt_notes": 1849,
+    "num_est_notes": 275,
+    "onset_only": {
+      "precision": 0.8218181818181818,
+      "recall": 0.12222823147647377,
+      "f1": 0.2128060263653484
+    },
+    "onset_offset": {
+      "precision": 0.16363636363636364,
+      "recall": 0.024337479718766902,
+      "f1": 0.0423728813559322
+    },
+    "onset_offset_sustained": {
+      "precision": 0.10181818181818182,
+      "recall": 0.015143320713899405,
+      "f1": 0.026365348399246705
+    },
+    "onset_velocity": {
+      "precision": 0.6,
+      "recall": 0.08923742563547864,
+      "f1": 0.15536723163841806
+    },
+    "onset_dev_median_ms": 3.008078231289346,
+    "wall_time": 4.017580032348633,
+    "real_time_factor": 0.01399853669807886,
+    "peak_rss_mb": 7682.109375,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Chopin_Op010-03_007_20100611-SMD",
+    "backend": "basic_pitch",
+    "num_gt_notes": 1849,
+    "num_est_notes": 2255,
+    "onset_only": {
+      "precision": 0.647450110864745,
+      "recall": 0.7896160086533262,
+      "f1": 0.7115009746588694
+    },
+    "onset_offset": {
+      "precision": 0.15609756097560976,
+      "recall": 0.1903731746890211,
+      "f1": 0.17153996101364524
+    },
+    "onset_offset_sustained": {
+      "precision": 0.23592017738359203,
+      "recall": 0.2877230935640887,
+      "f1": 0.2592592592592593
+    },
+    "onset_velocity": {
+      "precision": 0.22439024390243903,
+      "recall": 0.2736614386154678,
+      "f1": 0.246588693957115
+    },
+    "onset_dev_median_ms": -6.706632653042277,
+    "wall_time": 6.432052135467529,
+    "real_time_factor": 0.02241133148246526,
+    "peak_rss_mb": 652.140625,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Chopin_Op010-03_007_20100611-SMD",
+    "backend": "kong",
+    "num_gt_notes": 1849,
+    "num_est_notes": 1902,
+    "onset_only": {
+      "precision": 0.9321766561514195,
+      "recall": 0.9588967009194159,
+      "f1": 0.94534790722474
+    },
+    "onset_offset": {
+      "precision": 0.1288117770767613,
+      "recall": 0.1325040562466198,
+      "f1": 0.1306318315115969
+    },
+    "onset_offset_sustained": {
+      "precision": 0.8028391167192429,
+      "recall": 0.8258518117901569,
+      "f1": 0.8141828845641162
+    },
+    "onset_velocity": {
+      "precision": 0.8848580441640379,
+      "recall": 0.9102217414818821,
+      "f1": 0.8973607038123167
+    },
+    "onset_dev_median_ms": -8.11767578125,
+    "wall_time": 128.60362696647644,
+    "real_time_factor": 0.448096261207235,
+    "peak_rss_mb": 1946.0625,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Chopin_Op010-03_007_20100611-SMD",
+    "backend": "transkun",
+    "num_gt_notes": 1849,
+    "num_est_notes": 1806,
+    "onset_only": {
+      "precision": 0.9961240310077519,
+      "recall": 0.9729583558680368,
+      "f1": 0.9844049247606019
+    },
+    "onset_offset": {
+      "precision": 0.5852713178294574,
+      "recall": 0.5716603569497025,
+      "f1": 0.5783857729138168
+    },
+    "onset_offset_sustained": {
+      "precision": 0.1406423034330011,
+      "recall": 0.13737155219037317,
+      "f1": 0.1389876880984952
+    },
+    "onset_velocity": {
+      "precision": 0.9651162790697675,
+      "recall": 0.942671714440238,
+      "f1": 0.9537619699042408
+    },
+    "onset_dev_median_ms": -5.7291666666685614,
+    "wall_time": 21.905791997909546,
+    "real_time_factor": 0.0763268013864444,
+    "peak_rss_mb": 937.4375,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bach_BWV849-01_001_20090916-SMD",
+    "backend": "naive",
+    "num_gt_notes": 724,
+    "num_est_notes": 160,
+    "onset_only": {
+      "precision": 0.85,
+      "recall": 0.1878453038674033,
+      "f1": 0.30769230769230765
+    },
+    "onset_offset": {
+      "precision": 0.26875,
+      "recall": 0.05939226519337017,
+      "f1": 0.09728506787330318
+    },
+    "onset_offset_sustained": {
+      "precision": 0.23125,
+      "recall": 0.05110497237569061,
+      "f1": 0.083710407239819
+    },
+    "onset_velocity": {
+      "precision": 0.6,
+      "recall": 0.13259668508287292,
+      "f1": 0.21719457013574658
+    },
+    "onset_dev_median_ms": 9.399801587299805,
+    "wall_time": 2.713667869567871,
+    "real_time_factor": 0.017284508723362235,
+    "peak_rss_mb": 4262.75,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bach_BWV849-01_001_20090916-SMD",
+    "backend": "basic_pitch",
+    "num_gt_notes": 724,
+    "num_est_notes": 867,
+    "onset_only": {
+      "precision": 0.7716262975778547,
+      "recall": 0.9240331491712708,
+      "f1": 0.8409805153991201
+    },
+    "onset_offset": {
+      "precision": 0.31718569780853517,
+      "recall": 0.3798342541436464,
+      "f1": 0.34569453174104336
+    },
+    "onset_offset_sustained": {
+      "precision": 0.3748558246828143,
+      "recall": 0.4488950276243094,
+      "f1": 0.4085480829666876
+    },
+    "onset_velocity": {
+      "precision": 0.34486735870818913,
+      "recall": 0.4129834254143646,
+      "f1": 0.3758642363293526
+    },
+    "onset_dev_median_ms": 4.805045351474746,
+    "wall_time": 4.619471311569214,
+    "real_time_factor": 0.02942338415012238,
+    "peak_rss_mb": 480.09375,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bach_BWV849-01_001_20090916-SMD",
+    "backend": "kong",
+    "num_gt_notes": 724,
+    "num_est_notes": 722,
+    "onset_only": {
+      "precision": 0.9958448753462604,
+      "recall": 0.9930939226519337,
+      "f1": 0.9944674965421854
+    },
+    "onset_offset": {
+      "precision": 0.6385041551246537,
+      "recall": 0.6367403314917127,
+      "f1": 0.6376210235131397
+    },
+    "onset_offset_sustained": {
+      "precision": 0.7853185595567868,
+      "recall": 0.7831491712707183,
+      "f1": 0.7842323651452283
+    },
+    "onset_velocity": {
+      "precision": 0.9681440443213296,
+      "recall": 0.9654696132596685,
+      "f1": 0.966804979253112
+    },
+    "onset_dev_median_ms": 3.5367329915345636,
+    "wall_time": 66.75514507293701,
+    "real_time_factor": 0.4251920068339937,
+    "peak_rss_mb": 1923.21875,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "Bach_BWV849-01_001_20090916-SMD",
+    "backend": "transkun",
+    "num_gt_notes": 724,
+    "num_est_notes": 720,
+    "onset_only": {
+      "precision": 1.0,
+      "recall": 0.994475138121547,
+      "f1": 0.9972299168975068
+    },
+    "onset_offset": {
+      "precision": 0.9055555555555556,
+      "recall": 0.9005524861878453,
+      "f1": 0.9030470914127424
+    },
+    "onset_offset_sustained": {
+      "precision": 0.8236111111111111,
+      "recall": 0.819060773480663,
+      "f1": 0.8213296398891966
+    },
+    "onset_velocity": {
+      "precision": 0.9847222222222223,
+      "recall": 0.9792817679558011,
+      "f1": 0.981994459833795
+    },
+    "onset_dev_median_ms": 6.770833333334281,
+    "wall_time": 16.61341881752014,
+    "real_time_factor": 0.10581795425172065,
+    "peak_rss_mb": 794.34375,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  }
+]

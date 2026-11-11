@@ -44,18 +44,30 @@ def compute_sha256(filepath: str) -> str:
     return sha256.hexdigest()
 
 
-def get_cache_dir(dataset_name: str, backend_name: str) -> Path:
-    """Get the cache directory for a dataset and backend."""
-    return Path("out") / "detect" / dataset_name / backend_name
+def get_cache_dir(dataset_name: str, backend_name: str, cache_base: str = "out/detect") -> Path:
+    """Get the cache directory for a dataset and backend.
+    
+    Args:
+        dataset_name: Name of the dataset
+        backend_name: Name of the backend
+        cache_base: Base directory for cache (default: "out/detect")
+    """
+    return Path(cache_base) / dataset_name / backend_name
 
 
-def get_cache_path(dataset_name: str, backend_name: str, clip_name: str) -> Tuple[Path, Path]:
+def get_cache_path(dataset_name: str, backend_name: str, clip_name: str, cache_base: str = "out/detect") -> Tuple[Path, Path]:
     """Get the cache paths for a clip.
+    
+    Args:
+        dataset_name: Name of the dataset
+        backend_name: Name of the backend
+        clip_name: Name of the clip
+        cache_base: Base directory for cache (default: "out/detect")
     
     Returns:
         Tuple of (output_json_path, run_json_path)
     """
-    cache_dir = get_cache_dir(dataset_name, backend_name)
+    cache_dir = get_cache_dir(dataset_name, backend_name, cache_base)
     cache_dir.mkdir(parents=True, exist_ok=True)
     return (
         cache_dir / f"{clip_name}.json",
@@ -130,6 +142,7 @@ def evaluate_backend_on_clip(
     gt_json_path: str,
     dataset_name: str,
     no_cache: bool = False,
+    cache_dir: str = "out/detect",
 ) -> Dict:
     """Evaluate a single backend on a single clip.
     
@@ -139,6 +152,7 @@ def evaluate_backend_on_clip(
         gt_json_path: Path to ground truth JSON
         dataset_name: Name of the dataset (for cache directory)
         no_cache: If True, force re-run even if cache exists
+        cache_dir: Base directory for cache (default: "out/detect")
         
     Returns:
         Dict with metrics and timing info
@@ -149,7 +163,7 @@ def evaluate_backend_on_clip(
     gt_data = load_json(gt_json_path)
     
     # Check cache
-    cache_json, cache_run = get_cache_path(dataset_name, backend_name, clip_name)
+    cache_json, cache_run = get_cache_path(dataset_name, backend_name, clip_name, cache_dir)
     use_cache = not no_cache and cache_json.exists() and cache_run.exists() and load_cache_valid(wav_path, str(cache_run))
     
     if use_cache:
@@ -381,8 +395,8 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
     table_lines = []
     
     # Header
-    table_lines.append("| Clip | Backend | GT | Est | On+Off key (P/R/F1) | On+Off sustained (P/R/F1) | Onset dev (ms) | RT | RSS | Clips |")
-    table_lines.append("|------|---------|----|-----|---------------------|--------------------------|---------------|----|-----|-------|")
+    table_lines.append("| Clip | Backend | GT | Est | Onset-only (P/R/F1) | On+Off key (P/R/F1) | On+Off sustained (P/R/F1) | Onset+Velocity (P/R/F1) | Onset dev (ms) | RT | RSS | Device | Version | Clips |")
+    table_lines.append("|------|---------|----|-----|---------------------|---------------------|--------------------------|------------------------|---------------|----|-----|--------|---------|-------|")
     
     # Rows
     for r in results:
@@ -395,17 +409,21 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
             # Failed run - show error but don't include in mean
             error_msg = r["error"] if r["error"] else "Unknown error"
             table_lines.append(
-                f"| {clip} | {backend} | {num_gt} | FAILED | n/a | n/a | n/a | - | - | error |"
+                f"| {clip} | {backend} | {num_gt} | FAILED | n/a | n/a | n/a | n/a | n/a | - | - | - | - | error |"
             )
         else:
+            onset_only_str = fmt_metrics(r.get("onset_only"))
             onset_offset_str = fmt_metrics(r.get("onset_offset"))
             onset_offset_sustained_str = fmt_metrics(r.get("onset_offset_sustained"))
+            onset_velocity_str = fmt_metrics(r.get("onset_velocity"))
             onset_dev_str = fmt_float(r.get("onset_dev_median_ms"))
             rt_factor = f"{r['real_time_factor']:.2f}x"
             peak_rss = f"{r['peak_rss_mb']:.1f} MB"
+            device = r.get("device", "")
+            version = r.get("version", "")
             
             table_lines.append(
-                f"| {clip} | {backend} | {num_gt} | {num_est} | {onset_offset_str} | {onset_offset_sustained_str} | {onset_dev_str} | {rt_factor} | {peak_rss} | |")
+                f"| {clip} | {backend} | {num_gt} | {num_est} | {onset_only_str} | {onset_offset_str} | {onset_offset_sustained_str} | {onset_velocity_str} | {onset_dev_str} | {rt_factor} | {peak_rss} | {device} | {version} | |")
     
     # Mean row per backend (only for successful runs)
     successful_results = [r for r in results if not r["failed"]]
@@ -414,6 +432,11 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
         backends = set(r["backend"] for r in successful_results)
         for backend in sorted(backends):
             backend_results = [r for r in successful_results if r["backend"] == backend]
+            
+            # Onset-only metrics
+            onset_only_p = [r["onset_only"]["precision"] for r in backend_results if r.get("onset_only") is not None]
+            onset_only_r = [r["onset_only"]["recall"] for r in backend_results if r.get("onset_only") is not None]
+            onset_only_f1 = [r["onset_only"]["f1"] for r in backend_results if r.get("onset_only") is not None]
             
             # Onset+offset metrics (key release)
             onset_offset_p = [r["onset_offset"]["precision"] for r in backend_results if r["onset_offset"] is not None]
@@ -425,8 +448,19 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
             onset_offset_sustained_r = [r["onset_offset_sustained"]["recall"] for r in backend_results if r.get("onset_offset_sustained") is not None]
             onset_offset_sustained_f1 = [r["onset_offset_sustained"]["f1"] for r in backend_results if r.get("onset_offset_sustained") is not None]
             
+            # Onset+velocity metrics
+            onset_velocity_p = [r["onset_velocity"]["precision"] for r in backend_results if r.get("onset_velocity") is not None]
+            onset_velocity_r = [r["onset_velocity"]["recall"] for r in backend_results if r.get("onset_velocity") is not None]
+            onset_velocity_f1 = [r["onset_velocity"]["f1"] for r in backend_results if r.get("onset_velocity") is not None]
+            
             # Onset deviation
             onset_dev_values = [r["onset_dev_median_ms"] for r in backend_results if r.get("onset_dev_median_ms") is not None]
+            
+            mean_onset_only_str = fmt_metrics({
+                "precision": np.mean(onset_only_p) if onset_only_p else 0,
+                "recall": np.mean(onset_only_r) if onset_only_r else 0,
+                "f1": np.mean(onset_only_f1) if onset_only_f1 else 0,
+            }) if onset_only_p else "n/a"
             
             mean_onset_offset_str = fmt_metrics({
                 "precision": np.mean(onset_offset_p) if onset_offset_p else 0,
@@ -440,6 +474,12 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
                 "f1": np.mean(onset_offset_sustained_f1) if onset_offset_sustained_f1 else 0,
             }) if onset_offset_sustained_p else "n/a"
             
+            mean_onset_velocity_str = fmt_metrics({
+                "precision": np.mean(onset_velocity_p) if onset_velocity_p else 0,
+                "recall": np.mean(onset_velocity_r) if onset_velocity_r else 0,
+                "f1": np.mean(onset_velocity_f1) if onset_velocity_f1 else 0,
+            }) if onset_velocity_p else "n/a"
+            
             mean_onset_dev_str = fmt_float(np.mean(onset_dev_values)) if onset_dev_values else "n/a"
             
             mean_rt = np.mean([r["real_time_factor"] for r in backend_results])
@@ -448,12 +488,24 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
             mean_num_gt = int(np.mean([r["num_gt_notes"] for r in backend_results]))
             mean_num_est = int(np.mean([r["num_est_notes"] for r in backend_results]))
             
+            # Device and version: use the first non-empty value
+            device = ""
+            version = ""
+            for r in backend_results:
+                if r.get("device"):
+                    device = r["device"]
+                    break
+            for r in backend_results:
+                if r.get("version"):
+                    version = r["version"]
+                    break
+            
             # Count total clips for this backend
             total_clips = len([r for r in results if r["backend"] == backend])
             ok_clips = len(backend_results)
             
             table_lines.append(
-                f"| **mean** | {backend} | {mean_num_gt} | {mean_num_est} | {mean_onset_offset_str} | {mean_onset_offset_sustained_str} | {mean_onset_dev_str} | {mean_rt:.2f}x | {mean_rss:.1f} MB | {ok_clips}/{total_clips} |")
+                f"| **mean** | {backend} | {mean_num_gt} | {mean_num_est} | {mean_onset_only_str} | {mean_onset_offset_str} | {mean_onset_offset_sustained_str} | {mean_onset_velocity_str} | {mean_onset_dev_str} | {mean_rt:.2f}x | {mean_rss:.1f} MB | {device} | {version} | {ok_clips}/{total_clips} |")
     
     table = "\n".join(table_lines)
     
@@ -509,6 +561,8 @@ def main():
                         help="Output directory for results")
     parser.add_argument("--no-cache", action="store_true",
                         help="Force re-run backends, ignoring cache")
+    parser.add_argument("--cache-dir", type=str, default="out/detect",
+                        help="Base directory for cache (default: out/detect)")
     args = parser.parse_args()
     
     # Parse backends
@@ -551,6 +605,7 @@ def main():
                     gt_json_path,
                     dataset_basename,
                     no_cache=args.no_cache,
+                    cache_dir=args.cache_dir,
                 )
                 all_results.append(result)
                 
