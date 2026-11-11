@@ -42,7 +42,7 @@ def select_smd(members, n=5):
 def parse_csv(csv_str):
     reader = csv.DictReader(io.StringIO(csv_str), delimiter=';')
     return [{'onset': float(r['Start']), 'duration': float(r['Duration']),
-             'pitch': int(r['Pitch']), 'velocity': int(r['Velocity'])} for r in reader]
+             'pitch': int(r['Pitch']), 'velocity': float(r['Velocity'])} for r in reader]
 
 def check_consistency(wav_path, midi_path, csv_path):
     audio, fs_val = sf.read(wav_path)
@@ -76,7 +76,10 @@ def download_member(rz, member, out_path, exp_size):
             return True
         part.unlink()
         return False
-    except: return False
+    except Exception:
+        if part.exists():
+            part.unlink()
+        return False
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch SMD subset")
@@ -119,13 +122,13 @@ def main():
                         print(f"ERROR: Failed to download {m}")
                         sys.exit(1)
                 shutil.copy2(str(wav_cache), str(out_dir / f"{stem}.wav"))
-                shutil.copy2(str(midi_cache), str(out_dir / f"{stem}.midi"))
-                gt = midi_to_gt(str(out_dir / f"{stem}.midi"))
+                shutil.copy2(str(midi_cache), str(out_dir / f"{stem}.mid"))
+                gt = midi_to_gt(str(out_dir / f"{stem}.mid"))
                 save_json({"backend": "ground_truth", "audio": f"{stem}.wav",
                            "notes": gt["notes"], "pedal": gt["pedal"]},
                           str(out_dir / f"{stem}.gt.json"))
                 checks = check_consistency(str(out_dir / f"{stem}.wav"),
-                                           str(out_dir / f"{stem}.midi"), str(csv_cache))
+                                           str(out_dir / f"{stem}.mid"), str(csv_cache))
                 num_pedal = len(gt["pedal"])
                 wav_sha = compute_sha256(str(out_dir / f"{stem}.wav"))
                 composer = stem.split('_')[0]
@@ -133,7 +136,6 @@ def main():
                                  "duration": checks['wav_duration'], "num_notes": checks['num_notes'],
                                  "num_pedal_intervals": num_pedal, "wav_sha256": wav_sha,
                                  "csv_max_onset_diff_ms": checks['csv_max_onset_diff_ms'],
-                                 "wav_duration": checks['wav_duration'],
                                  "midi_end_time": checks['midi_end_time']})
                 print(f"  {composer}, {checks['wav_duration']:.1f}s, {checks['num_notes']} notes")
             with open(out_dir / "manifest.json", 'w') as f:

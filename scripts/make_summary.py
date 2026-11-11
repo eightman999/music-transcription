@@ -250,6 +250,24 @@ def get_unmeasured_datasets() -> List[str]:
     return unmeasured
 
 
+def get_newest_modification_date():
+    """Get the newest modification date among result JSON files."""
+    from datetime import datetime
+    datasets = ['synth', 'maestro_test5', 'smd5', 'maestro_test5_degraded']
+    newest_date = None
+    
+    for ds in datasets:
+        results_path = Path("results") / f"detect_{ds}.json"
+        if results_path.exists():
+            mtime = results_path.stat().st_mtime
+            if newest_date is None or mtime > newest_date:
+                newest_date = mtime
+    
+    if newest_date is None:
+        return "未測定"
+    return datetime.fromtimestamp(newest_date).strftime("%Y-%m-%d")
+
+
 def main():
     # Load all results
     datasets = ['synth', 'maestro_test5', 'smd5', 'maestro_test5_degraded']
@@ -271,7 +289,7 @@ def main():
     lines.append("# Phase 1a: 検出部の比較と選定 - サマリー")
     lines.append("")
     lines.append("## 実行日")
-    lines.append("自動生成")
+    lines.append(get_newest_modification_date())
     lines.append("")
     
     # Dataset tables

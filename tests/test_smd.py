@@ -159,21 +159,23 @@ class TestCSVParser:
     """Test the CSV parser on a small string."""
     
     def test_parse_csv_basic(self):
-        """Test parsing basic CSV content."""
+        """Test parsing basic CSV content with real SMD format."""
         csv_content = """Start;Duration;Pitch;Velocity;Instrument
-0.0;1.0;60;100;Piano
-0.5;1.0;64;90;Piano
-1.0;1.0;67;80;Piano"""
+002.549;000.476;68;000.273;MIDI 01
+003.061;000.251;64;000.273;MIDI 01
+003.312;000.251;60;000.273;MIDI 01"""
         
         notes = parse_csv(csv_content)
         
         assert len(notes) == 3
-        assert notes[0]['onset'] == 0.0
-        assert notes[0]['duration'] == 1.0
-        assert notes[0]['pitch'] == 60
-        assert notes[0]['velocity'] == 100
-        assert notes[1]['onset'] == 0.5
-        assert notes[2]['onset'] == 1.0
+        assert notes[0]['onset'] == 2.549
+        assert notes[0]['duration'] == 0.476
+        assert notes[0]['pitch'] == 68
+        assert notes[0]['velocity'] == 0.273
+        assert notes[1]['onset'] == 3.061
+        assert notes[1]['pitch'] == 64
+        assert notes[2]['onset'] == 3.312
+        assert notes[2]['pitch'] == 60
     
     def test_parse_csv_empty(self):
         """Test parsing empty CSV."""
@@ -186,3 +188,70 @@ class TestCSVParser:
         csv_content = "Start;Duration;Pitch;Velocity;Instrument\n"
         notes = parse_csv(csv_content)
         assert len(notes) == 0
+
+
+class TestEndToEnd:
+    """End-to-end test for fetch_smd_subset.py."""
+
+    def test_fetch_smd_subset_e2e(self):
+        """Test the full script as a subprocess."""
+        import subprocess
+        import json
+        from pathlib import Path
+
+        # Check if cache directory exists
+        cache_dir = Path("data/_downloads/smd/wav_44100_stereo")
+        if not cache_dir.exists():
+            import pytest
+            pytest.skip("SMD cache directory not found")
+
+        # Run the script with --out to a temp dir and --n 1
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir) / "smd_test"
+            result = subprocess.run(
+                [sys.executable, "scripts/fetch_smd_subset.py",
+                 "--out", str(out_dir), "--n", "1"],
+                capture_output=True, text=True
+            )
+
+            # Check exit code
+            assert result.returncode == 0, f"Script failed with: {result.stderr}"
+
+            # Check that output files exist
+            assert out_dir.exists(), "Output directory not created"
+
+            # Find the stem from the first piece
+            manifest_path = out_dir / "manifest.json"
+            assert manifest_path.exists(), "manifest.json not created"
+
+            with open(manifest_path, 'r') as f:
+                manifest = json.load(f)
+
+            assert "pieces" in manifest, "manifest.json missing 'pieces' key"
+            assert len(manifest["pieces"]) == 1, f"Expected 1 piece, got {len(manifest['pieces'])}"
+
+            piece = manifest["pieces"][0]
+            stem = piece["stem"]
+
+            # Check that all required files exist
+            assert (out_dir / f"{stem}.wav").exists(), f"{stem}.wav not found"
+            assert (out_dir / f"{stem}.mid").exists(), f"{stem}.mid not found"
+            assert (out_dir / f"{stem}.gt.json").exists(), f"{stem}.gt.json not found"
+
+            # Check that manifest has all required fields
+            required_fields = ["stem", "composer", "duration", "num_notes",
+                             "num_pedal_intervals", "wav_sha256",
+                             "csv_max_onset_diff_ms", "midi_end_time"]
+            for field in required_fields:
+                assert field in piece, f"Missing field: {field}"
+
+            # Check that gt.json has the same number of notes as manifest
+            with open(out_dir / f"{stem}.gt.json", 'r') as f:
+                gt = json.load(f)
+            assert len(gt["notes"]) == piece["num_notes"], \
+                f"Note count mismatch: gt={len(gt['notes'])}, manifest={piece['num_notes']}"
+
+            # Check manifest.json has source_url, licence, selection_rule
+            assert "source_url" in manifest, "Missing source_url in manifest"
+            assert "licence" in manifest, "Missing licence in manifest"
+            assert "selection_rule" in manifest, "Missing selection_rule in manifest"
