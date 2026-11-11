@@ -23,9 +23,15 @@ from mt.schema import load_json
 from mt.evaluate import (
     evaluate_onset_only,
     evaluate_onset_offset,
+    evaluate_onset_velocity,
     midi_to_hz,
 )
 from mt.backends import run_backend, list_backends
+
+
+def sort_notes_by_onset_pitch(notes):
+    """Sort notes by (onset, pitch) to ensure consistent ordering."""
+    return sorted(notes, key=lambda n: (n["onset"], n["pitch"]))
 
 
 def load_dataset(dataset_path: str) -> List[Tuple[str, str, str]]:
@@ -83,7 +89,10 @@ def evaluate_backend_on_clip(
     if not backend_failed:
         try:
             est_data = load_json(output_json)
-            num_est_notes = len(est_data.get("notes", []))
+            
+            # Sort notes by (onset, pitch) to ensure consistent ordering
+            est_data["notes"] = sort_notes_by_onset_pitch(est_data.get("notes", []))
+            num_est_notes = len(est_data["notes"])
             
             # Get meta if present
             meta = est_data.get("meta", {})
@@ -105,6 +114,14 @@ def evaluate_backend_on_clip(
                 offset_min_tolerance=0.05,
             )
             
+            # Compute velocity metrics
+            metrics_onset_velocity = evaluate_onset_velocity(
+                gt_data["notes"],
+                est_data["notes"],
+                onset_tolerance=0.05,
+                velocity_tolerance=0.1,
+            )
+            
             # Calculate real-time factor
             import soundfile as sf
             audio, fs = sf.read(wav_path)
@@ -118,6 +135,7 @@ def evaluate_backend_on_clip(
                 "num_est_notes": num_est_notes,
                 "onset_only": metrics_onset,
                 "onset_offset": metrics_onset_offset,
+                "onset_velocity": metrics_onset_velocity,
                 "wall_time": wall_time,
                 "real_time_factor": real_time_factor,
                 "peak_rss_mb": peak_rss_mb,
@@ -165,6 +183,7 @@ def format_metrics(metrics: Dict) -> str:
     """Format metrics for display."""
     onset = metrics["onset_only"]
     onset_offset = metrics["onset_offset"]
+    onset_velocity = metrics.get("onset_velocity", {"precision": 0, "recall": 0, "f1": 0})
     
     return (
         f"{metrics['onset_only']['precision']:.3f} / "
@@ -173,6 +192,9 @@ def format_metrics(metrics: Dict) -> str:
         f"{metrics['onset_offset']['precision']:.3f} / "
         f"{metrics['onset_offset']['recall']:.3f} / "
         f"{metrics['onset_offset']['f1']:.3f} | "
+        f"{onset_velocity['precision']:.3f} / "
+        f"{onset_velocity['recall']:.3f} / "
+        f"{onset_velocity['f1']:.3f} | "
         f"{metrics['real_time_factor']:.2f}x | "
         f"{metrics['peak_rss_mb']:.1f} MB"
     )
@@ -191,8 +213,8 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
     table_lines = []
     
     # Header
-    table_lines.append("| Clip | Backend | GT Notes | Est Notes | Onset-only (P/R/F1) | Onset+Offset (P/R/F1) | RT Factor | Peak RSS | Device | Version |")
-    table_lines.append("|------|---------|----------|-----------|---------------------|----------------------|-----------|----------|--------|---------|")
+    table_lines.append("| Clip | Backend | GT Notes | Est Notes | Onset-only (P/R/F1) | Onset+Offset (P/R/F1) | Onset+Velocity (P/R/F1) | RT Factor | Peak RSS | Device | Version |")
+    table_lines.append("|------|---------|----------|-----------|---------------------|----------------------|------------------------|-----------|----------|--------|---------|")
     
     # Rows
     for r in results:
@@ -205,9 +227,9 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
             # Failed run
             error_msg = r["error"] if r["error"] else "Unknown error"
             table_lines.append(
-                f"| {clip} | {backend} | {num_gt} | FAILED | FAILED | FAILED | - | - | - | - |"
+                f"| {clip} | {backend} | {num_gt} | FAILED | FAILED | FAILED | FAILED | - | - | - | - |"
             )
-            table_lines.append(f"| | | | | Error: {error_msg} | | | | | |")
+            table_lines.append(f"| | | | | Error: {error_msg} | | | | | | |")
         else:
             onset = r["onset_only"]
             onset_str = f"{onset['precision']:.3f}/{onset['recall']:.3f}/{onset['f1']:.3f}"
@@ -215,38 +237,52 @@ def print_markdown_table(results: List[Dict], dataset_name: str) -> str:
             onset_offset = r["onset_offset"]
             onset_offset_str = f"{onset_offset['precision']:.3f}/{onset_offset['recall']:.3f}/{onset_offset['f1']:.3f}"
             
+            onset_velocity = r.get("onset_velocity", {"precision": 0, "recall": 0, "f1": 0})
+            onset_velocity_str = f"{onset_velocity['precision']:.3f}/{onset_velocity['recall']:.3f}/{onset_velocity['f1']:.3f}"
+            
             rt_factor = f"{r['real_time_factor']:.2f}x"
             peak_rss = f"{r['peak_rss_mb']:.1f} MB"
             device = r.get("device", "")
             version = r.get("version", "")
             
             table_lines.append(
-                f"| {clip} | {backend} | {num_gt} | {num_est} | {onset_str} | {onset_offset_str} | {rt_factor} | {peak_rss} | {device} | {version} |"
+                f"| {clip} | {backend} | {num_gt} | {num_est} | {onset_str} | {onset_offset_str} | {onset_velocity_str} | {rt_factor} | {peak_rss} | {device} | {version} |"
             )
     
-    # Mean row (only for successful runs)
+    # Mean row per backend (only for successful runs)
     successful_results = [r for r in results if not r["failed"]]
     if successful_results:
-        mean_onset_p = np.mean([r["onset_only"]["precision"] for r in successful_results])
-        mean_onset_r = np.mean([r["onset_only"]["recall"] for r in successful_results])
-        mean_onset_f1 = np.mean([r["onset_only"]["f1"] for r in successful_results])
-        
-        mean_onset_offset_p = np.mean([r["onset_offset"]["precision"] for r in successful_results])
-        mean_onset_offset_r = np.mean([r["onset_offset"]["recall"] for r in successful_results])
-        mean_onset_offset_f1 = np.mean([r["onset_offset"]["f1"] for r in successful_results])
-        
-        mean_rt = np.mean([r["real_time_factor"] for r in successful_results])
-        mean_rss = np.mean([r["peak_rss_mb"] for r in successful_results])
-        
-        mean_onset_str = f"{mean_onset_p:.3f}/{mean_onset_r:.3f}/{mean_onset_f1:.3f}"
-        mean_onset_offset_str = f"{mean_onset_offset_p:.3f}/{mean_onset_offset_r:.3f}/{mean_onset_offset_f1:.3f}"
-        
-        mean_num_gt = int(np.mean([r["num_gt_notes"] for r in successful_results]))
-        mean_num_est = int(np.mean([r["num_est_notes"] for r in successful_results]))
-        
-        table_lines.append(
-            f"| **mean** | | {mean_num_gt} | {mean_num_est} | {mean_onset_str} | {mean_onset_offset_str} | {mean_rt:.2f}x | {mean_rss:.1f} MB | | |"
-        )
+        # Group by backend
+        backends = set(r["backend"] for r in successful_results)
+        for backend in sorted(backends):
+            backend_results = [r for r in successful_results if r["backend"] == backend]
+            
+            mean_onset_p = np.mean([r["onset_only"]["precision"] for r in backend_results])
+            mean_onset_r = np.mean([r["onset_only"]["recall"] for r in backend_results])
+            mean_onset_f1 = np.mean([r["onset_only"]["f1"] for r in backend_results])
+            
+            mean_onset_offset_p = np.mean([r["onset_offset"]["precision"] for r in backend_results])
+            mean_onset_offset_r = np.mean([r["onset_offset"]["recall"] for r in backend_results])
+            mean_onset_offset_f1 = np.mean([r["onset_offset"]["f1"] for r in backend_results])
+            
+            # Velocity metrics
+            mean_velocity_p = np.mean([r.get("onset_velocity", {"precision": 0})["precision"] for r in backend_results])
+            mean_velocity_r = np.mean([r.get("onset_velocity", {"recall": 0})["recall"] for r in backend_results])
+            mean_velocity_f1 = np.mean([r.get("onset_velocity", {"f1": 0})["f1"] for r in backend_results])
+            
+            mean_rt = np.mean([r["real_time_factor"] for r in backend_results])
+            mean_rss = np.mean([r["peak_rss_mb"] for r in backend_results])
+            
+            mean_onset_str = f"{mean_onset_p:.3f}/{mean_onset_r:.3f}/{mean_onset_f1:.3f}"
+            mean_onset_offset_str = f"{mean_onset_offset_p:.3f}/{mean_onset_offset_r:.3f}/{mean_onset_offset_f1:.3f}"
+            mean_velocity_str = f"{mean_velocity_p:.3f}/{mean_velocity_r:.3f}/{mean_velocity_f1:.3f}"
+            
+            mean_num_gt = int(np.mean([r["num_gt_notes"] for r in backend_results]))
+            mean_num_est = int(np.mean([r["num_est_notes"] for r in backend_results]))
+            
+            table_lines.append(
+                f"| **mean** | {backend} | {mean_num_gt} | {mean_num_est} | {mean_onset_str} | {mean_onset_offset_str} | {mean_velocity_str} | {mean_rt:.2f}x | {mean_rss:.1f} MB | | |"
+            )
     
     table = "\n".join(table_lines)
     
@@ -264,7 +300,9 @@ def save_results_json(results: List[Dict], dataset_name: str, output_dir: str = 
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    output_path = os.path.join(output_dir, f"detect_{dataset_name}.json")
+    # Use basename of dataset_name to avoid path separators in filename
+    dataset_basename = os.path.basename(dataset_name)
+    output_path = os.path.join(output_dir, f"detect_{dataset_basename}.json")
     
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
@@ -280,7 +318,9 @@ def save_results_md(table: str, dataset_name: str, output_dir: str = "results") 
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    output_path = os.path.join(output_dir, f"detect_{dataset_name}.md")
+    # Use basename of dataset_name to avoid path separators in filename
+    dataset_basename = os.path.basename(dataset_name)
+    output_path = os.path.join(output_dir, f"detect_{dataset_basename}.md")
     
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(table)

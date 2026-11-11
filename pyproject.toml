@@ -12,6 +12,7 @@ dependencies = [
     "pretty_midi>=0.2.10",
     "music21>=9.0.0",
     "pytest>=7.4.0",
+    "remotezip>=0.13.0",
 ]
 
 [project.optional-dependencies]

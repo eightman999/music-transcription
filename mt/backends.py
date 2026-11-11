@@ -97,12 +97,9 @@ def run_backend(
     start_time = time.time()
     
     # Run the backend as a subprocess
-    # We use Popen and wait4 to get the child's RSS
-    import sys
-    
-    # On macOS, we need to use os.posix_spawn or subprocess with preexec_fn
-    # But preexec_fn doesn't work with capture_output, so we'll use a different approach
-    # We'll use os.wait4 to get the child's resource usage
+    import platform
+    import os
+    is_mac = platform.system() == 'Darwin'
     
     # Start the process
     proc = subprocess.Popen(
@@ -112,52 +109,44 @@ def run_backend(
         text=True,
     )
     
-    # Wait for it to finish and get resource usage
+    # Wait for the process to finish and get resource usage
     pid = proc.pid
     
-    # On macOS, we can use os.wait4 to get ru_maxrss
-    # On Linux, ru_maxrss is in kilobytes, on macOS it's in bytes
-    import platform
-    is_mac = platform.system() == 'Darwin'
-    
-    # Wait for the process to finish
-    stdout, stderr = proc.communicate()
+    # Use os.wait4 to get resource usage before reaping the process
+    # On macOS: ru_maxrss is in bytes
+    # On Linux: ru_maxrss is in kilobytes
+    try:
+        _, status, rusage = os.wait4(pid, 0)
+        if is_mac:
+            peak_rss_bytes = rusage.ru_maxrss
+        else:
+            peak_rss_bytes = rusage.ru_maxrss * 1024
+    except (AttributeError, OSError):
+        # Fallback for systems without os.wait4
+        # Wait for process to finish
+        stdout, stderr = proc.communicate()
+        
+        # Try resource.getrusage for children
+        try:
+            import resource
+            usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+            if is_mac:
+                peak_rss_bytes = usage.ru_maxrss
+            else:
+                peak_rss_bytes = usage.ru_maxrss * 1024
+        except Exception:
+            peak_rss_bytes = 0
+        
+        # Read stdout/stderr
+        stdout = proc.stdout.read() if proc.stdout else ""
+        stderr = proc.stderr.read() if proc.stderr else ""
+    else:
+        # Successfully got resource usage via os.wait4
+        # Now read stdout/stderr from the process
+        stdout, stderr = proc.communicate()
     
     end_time = time.time()
     wall_time = end_time - start_time
-    
-    # Get peak RSS
-    try:
-        # Try to get resource usage
-        if is_mac:
-            # On macOS, use os.wait4
-            import os
-            # We need to get the resource usage before reaping
-            # But we already called communicate(), which reaped the process
-            # So we need to use a different approach
-            # Let's use psutil if available
-            try:
-                import psutil
-                process = psutil.Process(pid)
-                mem_info = process.memory_info()
-                peak_rss_bytes = mem_info.rss
-            except ImportError:
-                # Fallback: use resource.getrusage for children
-                # This won't work after communicate() has reaped
-                # So we'll have to use a different approach
-                # For now, use the parent's children rss
-                import resource
-                usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-                peak_rss_bytes = usage.ru_maxrss
-        else:
-            # On Linux, ru_maxrss is in kilobytes
-            import resource
-            usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-            peak_rss_kb = usage.ru_maxrss
-            peak_rss_bytes = peak_rss_kb * 1024
-    except Exception as e:
-        # Fallback: estimate from the process
-        peak_rss_bytes = 0
     
     # Convert to MB
     peak_rss_mb = peak_rss_bytes / (1024 * 1024)

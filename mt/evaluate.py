@@ -126,3 +126,52 @@ def evaluate_onset_offset(
         offset_ratio=offset_ratio,
         offset_min_tolerance=offset_min_tolerance,
     )
+
+
+def evaluate_onset_velocity(
+    reference_notes: List[Dict],
+    estimated_notes: List[Dict],
+    onset_tolerance: float = 0.05,
+    velocity_tolerance: float = 0.1,
+) -> Dict:
+    """Evaluate onset+velocity matching using mir_eval.
+    
+    Uses mir_eval.transcription_velocity.precision_recall_f1_overlap with
+    onset tolerance 0.05, offset_ratio=None (onset-only), and default velocity tolerance 0.1.
+    
+    Velocities are compared after mir_eval's own linear rescaling, so this measures
+    relative dynamics, not absolute loudness.
+    
+    Args:
+        reference_notes: Ground truth notes
+        estimated_notes: Detected notes
+        onset_tolerance: Tolerance for onset matching in seconds
+        velocity_tolerance: Tolerance for velocity matching (default 0.1)
+    
+    Returns:
+        Dict with precision, recall, f1_score
+    """
+    ref_pitches, ref_intervals = notes_to_mir_eval_format(reference_notes)
+    est_pitches, est_intervals = notes_to_mir_eval_format(estimated_notes)
+    
+    # Get velocities
+    ref_velocities = np.array([n["velocity"] for n in reference_notes])
+    est_velocities = np.array([n["velocity"] for n in estimated_notes])
+    
+    precision, recall, f1_score, _ = mir_eval.transcription_velocity.precision_recall_f1_overlap(
+        ref_intervals,
+        ref_pitches,
+        ref_velocities,
+        est_intervals,
+        est_pitches,
+        est_velocities,
+        onset_tolerance=onset_tolerance,
+        offset_ratio=None,
+        velocity_tolerance=velocity_tolerance,
+    )
+    
+    return {
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1": float(f1_score),
+    }

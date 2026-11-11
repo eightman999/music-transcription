@@ -35,6 +35,7 @@ out/
 
 # Temporary files
 tmp/
+_staging/
 
 # UV cache
 .uv-cache/
