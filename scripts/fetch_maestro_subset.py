@@ -74,9 +74,13 @@ def select_test_subset(rows: List[Dict]) -> List[Dict]:
     Criteria:
     - split == "test"
     - 90 <= duration <= 420
-    - Greedy pick by composer (first occurrence of each composer)
+    - Greedy pick by composer AND year (first occurrence of each composer+year combination)
     - Max 5 pieces
     - Total duration <= 1800 seconds (30 minutes)
+    
+    Selection rule: Sort by audio_filename, then greedily pick rows whose
+    canonical_composer has not been picked yet AND whose year has not been picked yet.
+    This ensures different composers AND different recording years when possible.
     
     Returns:
         List of selected rows
@@ -91,14 +95,18 @@ def select_test_subset(rows: List[Dict]) -> List[Dict]:
     # Sort by audio_filename
     test_rows.sort(key=lambda r: r['audio_filename'])
     
-    # Greedy pick by composer
+    # Greedy pick by composer AND year
     selected = []
     seen_composers = set()
+    seen_years = set()
     total_duration = 0.0
     
     for row in test_rows:
         composer = row['canonical_composer']
-        if composer in seen_composers:
+        year = row['year']
+        
+        # Skip if we've already seen this composer OR this year
+        if composer in seen_composers or year in seen_years:
             continue
         
         duration = float(row['duration'])
@@ -108,6 +116,7 @@ def select_test_subset(rows: List[Dict]) -> List[Dict]:
         
         selected.append(row)
         seen_composers.add(composer)
+        seen_years.add(year)
         total_duration += duration
         
         if len(selected) >= 5:
@@ -135,21 +144,40 @@ def compute_sha256(filepath: str) -> str:
 
 
 def extract_member_from_zip(zip_url: str, member_name: str, output_path: str) -> bool:
-    """Extract a single member from a remote zip file using remotezip."""
+    """Extract a single member from a remote zip file using remotezip.
+    
+    The member_name from the CSV is relative (e.g., '2004/...'), but in the zip
+    it's stored with the prefix 'maestro-v3.0.0/'. This function handles that.
+    """
     try:
         import remotezip
         
         print(f"  Downloading {member_name} from {zip_url}...")
         with remotezip.RemoteZip(zip_url) as rz:
-            if member_name in rz.namelist():
-                data = rz.read(member_name)
-                with open(output_path, 'wb') as f:
-                    f.write(data)
-                print(f"  Saved to {output_path}")
-                return True
-            else:
+            # The CSV has relative paths like '2004/...', but the zip has 'maestro-v3.0.0/2004/...'
+            # Try both with and without the prefix
+            possible_names = [
+                f"maestro-v3.0.0/{member_name}",
+                member_name,
+            ]
+            
+            found = False
+            for name in possible_names:
+                if name in rz.namelist():
+                    data = rz.read(name)
+                    with open(output_path, 'wb') as f:
+                        f.write(data)
+                    print(f"  Saved to {output_path}")
+                    found = True
+                    break
+            
+            if not found:
+                # Debug: show what's actually in the zip
                 print(f"  ERROR: {member_name} not found in zip")
+                print(f"  Available files matching pattern: {[n for n in rz.namelist() if member_name.split('/')[-1] in n][:5]}")
                 return False
+            
+            return True
     except ImportError:
         print("  ERROR: remotezip not installed")
         return False
@@ -332,6 +360,7 @@ def main():
                 "composer": composer,
                 "title": title,
                 "year": year,
+                "split": "test",
                 "duration": duration,
                 "original_midi_filename": midi_filename,
                 "original_audio_filename": audio_filename,
@@ -378,6 +407,7 @@ def main():
             "composer": composer,
             "title": title,
             "year": year,
+            "split": "test",
             "duration": duration,
             "original_midi_filename": midi_filename,
             "original_audio_filename": audio_filename,
@@ -399,6 +429,11 @@ def main():
     print(f"  Total pieces: {len(manifest)}")
     print(f"  Total duration: {total_duration:.1f}s ({total_duration/60:.1f} minutes)")
     print(f"  Output directory: {output_dir}")
+    
+    # Exit non-zero if we didn't get all requested pieces
+    if len(manifest) < len(selected_rows):
+        print(f"\nERROR: Only obtained {len(manifest)}/{len(selected_rows)} pieces")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

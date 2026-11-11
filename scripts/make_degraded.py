@@ -95,7 +95,7 @@ def add_pink_noise(input_path: str, output_path: str, snr_db: float = 30.0) -> b
         
         try:
             cmd_noise = [
-                'ffmpeg', '-y', '-f', 'lavfi', '-i', f'anoisesrc=pn=1:r=44100:d={duration}',
+                'ffmpeg', '-y', '-f', 'lavfi', '-i', f'anoisesrc=color=pink:r=44100:d={duration}',
                 '-t', str(duration),
                 noise_path
             ]
@@ -208,9 +208,18 @@ def check_time_offset(original_path: str, degraded_path: str) -> float:
         orig_window = orig_audio[:window_size]
         deg_window = deg_audio[:window_size]
         
-        # Normalize
-        orig_window = orig_window / np.max(np.abs(orig_window))
-        deg_window = deg_window / np.max(np.abs(deg_window))
+        # Normalize - handle stereo by taking mean across channels
+        if len(orig_window.shape) > 1:
+            orig_window = np.mean(orig_window, axis=1)
+        if len(deg_window.shape) > 1:
+            deg_window = np.mean(deg_window, axis=1)
+        
+        orig_max = np.max(np.abs(orig_window))
+        deg_max = np.max(np.abs(deg_window))
+        if orig_max > 0:
+            orig_window = orig_window / orig_max
+        if deg_max > 0:
+            deg_window = deg_window / deg_max
         
         # Cross-correlate to find offset
         # For simplicity, we'll just check the first few samples

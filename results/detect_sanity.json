@@ -1,0 +1,48 @@
+[
+  {
+    "clip": "scarlatti_k525",
+    "backend": "naive",
+    "num_gt_notes": 882,
+    "num_est_notes": 220,
+    "onset_only": {
+      "precision": 0.6863636363636364,
+      "recall": 0.1712018140589569,
+      "f1": 0.27404718693284935
+    },
+    "onset_offset": {
+      "precision": 0.03636363636363636,
+      "recall": 0.009070294784580499,
+      "f1": 0.014519056261343014
+    },
+    "wall_time": 1.8939628601074219,
+    "real_time_factor": 0.02820460456262454,
+    "peak_rss_mb": 1900.0,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "scarlatti_k525",
+    "backend": "basic_pitch",
+    "num_gt_notes": 882,
+    "num_est_notes": 0,
+    "onset_only": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "onset_offset": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "wall_time": 0,
+    "real_time_factor": 0,
+    "peak_rss_mb": 0,
+    "device": "",
+    "version": "",
+    "failed": true,
+    "error": "Backend basic_pitch did not create output file tmp/basic_pitch_scarlatti_k525.json"
+  }
+]

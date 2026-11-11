@@ -1,0 +1,562 @@
+[
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2011_MID__AUDIO_R1_D1_10_Track10_wav",
+    "backend": "naive",
+    "num_gt_notes": 3126,
+    "num_est_notes": 830,
+    "onset_only": {
+      "precision": 0.7469879518072289,
+      "recall": 0.19833653230966092,
+      "f1": 0.3134479271991911
+    },
+    "onset_offset": {
+      "precision": 0.1144578313253012,
+      "recall": 0.030390275111964172,
+      "f1": 0.04802831142568251
+    },
+    "onset_velocity": {
+      "precision": 0.563855421686747,
+      "recall": 0.14971209213051823,
+      "f1": 0.23660262891809905
+    },
+    "wall_time": 3.7833058834075928,
+    "real_time_factor": 0.024255557027507833,
+    "peak_rss_mb": 4174.5,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2011_MID__AUDIO_R1_D1_10_Track10_wav",
+    "backend": "basic_pitch",
+    "num_gt_notes": 3126,
+    "num_est_notes": 1753,
+    "onset_only": {
+      "precision": 0.804905875641757,
+      "recall": 0.4513755598208573,
+      "f1": 0.5783972125435539
+    },
+    "onset_offset": {
+      "precision": 0.20821448944666288,
+      "recall": 0.11676263595649392,
+      "f1": 0.14962082393933182
+    },
+    "onset_velocity": {
+      "precision": 0.5099828864803194,
+      "recall": 0.28598848368522073,
+      "f1": 0.36646853863496615
+    },
+    "wall_time": 6.185352087020874,
+    "real_time_factor": 0.03965557237651093,
+    "peak_rss_mb": 480.03125,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2011_MID__AUDIO_R1_D1_10_Track10_wav",
+    "backend": "kong",
+    "num_gt_notes": 3126,
+    "num_est_notes": 3049,
+    "onset_only": {
+      "precision": 0.9580190226303706,
+      "recall": 0.9344209852847088,
+      "f1": 0.9460728744939272
+    },
+    "onset_offset": {
+      "precision": 0.40701869465398494,
+      "recall": 0.39699296225207936,
+      "f1": 0.4019433198380567
+    },
+    "onset_velocity": {
+      "precision": 0.9317809117743523,
+      "recall": 0.9088291746641075,
+      "f1": 0.920161943319838
+    },
+    "wall_time": 69.00475096702576,
+    "real_time_factor": 0.44240373996462,
+    "peak_rss_mb": 2345.1875,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2011_MID__AUDIO_R1_D1_10_Track10_wav",
+    "backend": "transkun",
+    "num_gt_notes": 3126,
+    "num_est_notes": 2988,
+    "onset_only": {
+      "precision": 0.9973226238286479,
+      "recall": 0.9532949456174025,
+      "f1": 0.9748119070984625
+    },
+    "onset_offset": {
+      "precision": 0.178714859437751,
+      "recall": 0.1708253358925144,
+      "f1": 0.1746810598626104
+    },
+    "onset_velocity": {
+      "precision": 0.9896251673360107,
+      "recall": 0.9459373000639796,
+      "f1": 0.9672881910369644
+    },
+    "wall_time": 19.529054880142212,
+    "real_time_factor": 0.12520481265236016,
+    "peak_rss_mb": 794.765625,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_03_R1_2008_01_04_ORIG_MID__AUDIO_03_R1_2008_wav__1",
+    "backend": "naive",
+    "num_gt_notes": 2945,
+    "num_est_notes": 1657,
+    "onset_only": {
+      "precision": 0.4821967410983706,
+      "recall": 0.2713073005093379,
+      "f1": 0.3472403302911778
+    },
+    "onset_offset": {
+      "precision": 0.04224502112251056,
+      "recall": 0.023769100169779286,
+      "f1": 0.03042155584528466
+    },
+    "onset_velocity": {
+      "precision": 0.3693421846710923,
+      "recall": 0.20780984719864176,
+      "f1": 0.2659713168187744
+    },
+    "wall_time": 10.001780986785889,
+    "real_time_factor": 0.027633232932751477,
+    "peak_rss_mb": 6171.140625,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_03_R1_2008_01_04_ORIG_MID__AUDIO_03_R1_2008_wav__1",
+    "backend": "basic_pitch",
+    "num_gt_notes": 2945,
+    "num_est_notes": 3420,
+    "onset_only": {
+      "precision": 0.7801169590643274,
+      "recall": 0.9059422750424448,
+      "f1": 0.8383346425765906
+    },
+    "onset_offset": {
+      "precision": 0.12485380116959065,
+      "recall": 0.14499151103565366,
+      "f1": 0.13417124901806757
+    },
+    "onset_velocity": {
+      "precision": 0.4692982456140351,
+      "recall": 0.5449915110356537,
+      "f1": 0.5043205027494108
+    },
+    "wall_time": 9.71254587173462,
+    "real_time_factor": 0.026834125122142307,
+    "peak_rss_mb": 735.265625,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_03_R1_2008_01_04_ORIG_MID__AUDIO_03_R1_2008_wav__1",
+    "backend": "kong",
+    "num_gt_notes": 2945,
+    "num_est_notes": 2940,
+    "onset_only": {
+      "precision": 0.9945578231292517,
+      "recall": 0.9928692699490662,
+      "f1": 0.993712829226848
+    },
+    "onset_offset": {
+      "precision": 0.18095238095238095,
+      "recall": 0.18064516129032257,
+      "f1": 0.1807986406117247
+    },
+    "onset_velocity": {
+      "precision": 0.9918367346938776,
+      "recall": 0.9901528013582342,
+      "f1": 0.9909940526762957
+    },
+    "wall_time": 132.07135319709778,
+    "real_time_factor": 0.3648908600838993,
+    "peak_rss_mb": 3089.953125,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_03_R1_2008_01_04_ORIG_MID__AUDIO_03_R1_2008_wav__1",
+    "backend": "transkun",
+    "num_gt_notes": 2945,
+    "num_est_notes": 2932,
+    "onset_only": {
+      "precision": 1.0,
+      "recall": 0.9955857385398982,
+      "f1": 0.997787987068232
+    },
+    "onset_offset": {
+      "precision": 0.23567530695770805,
+      "recall": 0.23463497453310697,
+      "f1": 0.23515399013101926
+    },
+    "onset_velocity": {
+      "precision": 0.9989768076398363,
+      "recall": 0.9945670628183362,
+      "f1": 0.9967670580228009
+    },
+    "wall_time": 28.96967124938965,
+    "real_time_factor": 0.08003831264424334,
+    "peak_rss_mb": 1035.921875,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_01_R1_2006_01_09_ORIG_MID__AUDIO_01_R1_2006_02_Track02_wav",
+    "backend": "naive",
+    "num_gt_notes": 4154,
+    "num_est_notes": 932,
+    "onset_only": {
+      "precision": 0.7199570815450643,
+      "recall": 0.1615310544053924,
+      "f1": 0.2638615808100669
+    },
+    "onset_offset": {
+      "precision": 0.048283261802575105,
+      "recall": 0.010832932113625422,
+      "f1": 0.017695635076681086
+    },
+    "onset_velocity": {
+      "precision": 0.5633047210300429,
+      "recall": 0.12638420799229658,
+      "f1": 0.20644907589461264
+    },
+    "wall_time": 8.720722198486328,
+    "real_time_factor": 0.023257055069543214,
+    "peak_rss_mb": 6555.703125,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_01_R1_2006_01_09_ORIG_MID__AUDIO_01_R1_2006_02_Track02_wav",
+    "backend": "basic_pitch",
+    "num_gt_notes": 4154,
+    "num_est_notes": 3558,
+    "onset_only": {
+      "precision": 0.7726250702641934,
+      "recall": 0.6617717862301397,
+      "f1": 0.7129149377593361
+    },
+    "onset_offset": {
+      "precision": 0.08122540753232153,
+      "recall": 0.06957149735194992,
+      "f1": 0.074948132780083
+    },
+    "onset_velocity": {
+      "precision": 0.4291736930860034,
+      "recall": 0.3675974963890226,
+      "f1": 0.39600622406639
+    },
+    "wall_time": 11.084776878356934,
+    "real_time_factor": 0.02956168771644775,
+    "peak_rss_mb": 752.28125,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_01_R1_2006_01_09_ORIG_MID__AUDIO_01_R1_2006_02_Track02_wav",
+    "backend": "kong",
+    "num_gt_notes": 4154,
+    "num_est_notes": 4098,
+    "onset_only": {
+      "precision": 0.9987798926305514,
+      "recall": 0.9853153586904189,
+      "f1": 0.9920019389238972
+    },
+    "onset_offset": {
+      "precision": 0.10126891166422645,
+      "recall": 0.0999037072701011,
+      "f1": 0.1005816771691711
+    },
+    "onset_velocity": {
+      "precision": 0.9914592484138605,
+      "recall": 0.9780934039480019,
+      "f1": 0.9847309743092584
+    },
+    "wall_time": 139.18618178367615,
+    "real_time_factor": 0.37119181427706427,
+    "peak_rss_mb": 3053.34375,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_01_R1_2006_01_09_ORIG_MID__AUDIO_01_R1_2006_02_Track02_wav",
+    "backend": "transkun",
+    "num_gt_notes": 4154,
+    "num_est_notes": 4122,
+    "onset_only": {
+      "precision": 0.999757399320718,
+      "recall": 0.9920558497833414,
+      "f1": 0.9958917351377478
+    },
+    "onset_offset": {
+      "precision": 0.0977680737506065,
+      "recall": 0.09701492537313433,
+      "f1": 0.097390043499275
+    },
+    "onset_velocity": {
+      "precision": 0.9985443959243085,
+      "recall": 0.9908521906596052,
+      "f1": 0.9946834219429677
+    },
+    "wall_time": 29.479281902313232,
+    "real_time_factor": 0.07861748912626623,
+    "peak_rss_mb": 1052.828125,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2009_03_06_ORIG_MID__AUDIO_02_R1_2009_02_R1_2009_03_WAV",
+    "backend": "naive",
+    "num_gt_notes": 2367,
+    "num_est_notes": 659,
+    "onset_only": {
+      "precision": 0.5098634294385432,
+      "recall": 0.14195183776932827,
+      "f1": 0.22207534699272968
+    },
+    "onset_offset": {
+      "precision": 0.09256449165402124,
+      "recall": 0.02577101816645543,
+      "f1": 0.0403172504957039
+    },
+    "onset_velocity": {
+      "precision": 0.3915022761760243,
+      "recall": 0.10899873257287707,
+      "f1": 0.170522141440846
+    },
+    "wall_time": 7.810115098953247,
+    "real_time_factor": 0.022369296520300983,
+    "peak_rss_mb": 5803.015625,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2009_03_06_ORIG_MID__AUDIO_02_R1_2009_02_R1_2009_03_WAV",
+    "backend": "basic_pitch",
+    "num_gt_notes": 2367,
+    "num_est_notes": 2716,
+    "onset_only": {
+      "precision": 0.6156111929307806,
+      "recall": 0.7063793831854668,
+      "f1": 0.6578792051937832
+    },
+    "onset_offset": {
+      "precision": 0.11597938144329897,
+      "recall": 0.13307984790874525,
+      "f1": 0.1239425536100728
+    },
+    "onset_velocity": {
+      "precision": 0.24742268041237114,
+      "recall": 0.28390367553865653,
+      "f1": 0.26441078103482196
+    },
+    "wall_time": 9.356775999069214,
+    "real_time_factor": 0.026799156497100383,
+    "peak_rss_mb": 734.734375,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2009_03_06_ORIG_MID__AUDIO_02_R1_2009_02_R1_2009_03_WAV",
+    "backend": "kong",
+    "num_gt_notes": 2367,
+    "num_est_notes": 2327,
+    "onset_only": {
+      "precision": 0.989686291362269,
+      "recall": 0.9729615547106042,
+      "f1": 0.9812526629740095
+    },
+    "onset_offset": {
+      "precision": 0.14267296948861194,
+      "recall": 0.14026193493874103,
+      "f1": 0.14145717937792926
+    },
+    "onset_velocity": {
+      "precision": 0.9785131070047272,
+      "recall": 0.9619771863117871,
+      "f1": 0.9701746910950149
+    },
+    "wall_time": 126.70833015441895,
+    "real_time_factor": 0.36291093958349857,
+    "peak_rss_mb": 3028.515625,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_02_R1_2009_03_06_ORIG_MID__AUDIO_02_R1_2009_02_R1_2009_03_WAV",
+    "backend": "transkun",
+    "num_gt_notes": 2367,
+    "num_est_notes": 2327,
+    "onset_only": {
+      "precision": 0.9995702621400946,
+      "recall": 0.9826784959864808,
+      "f1": 0.9910524073285044
+    },
+    "onset_offset": {
+      "precision": 0.593467984529437,
+      "recall": 0.583438952260245,
+      "f1": 0.5884107371112058
+    },
+    "onset_velocity": {
+      "precision": 0.9978513107004727,
+      "recall": 0.9809885931558935,
+      "f1": 0.9893481039625053
+    },
+    "wall_time": 28.5566987991333,
+    "real_time_factor": 0.08179050564368126,
+    "peak_rss_mb": 1024.6875,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_SMF_02_R1_2004_01_05_ORIG_MID__AUDIO_02_R1_2004_08_Track08_wav",
+    "backend": "naive",
+    "num_gt_notes": 2850,
+    "num_est_notes": 376,
+    "onset_only": {
+      "precision": 0.6329787234042553,
+      "recall": 0.08350877192982456,
+      "f1": 0.14755114693118412
+    },
+    "onset_offset": {
+      "precision": 0.10904255319148937,
+      "recall": 0.014385964912280702,
+      "f1": 0.02541847489150651
+    },
+    "onset_velocity": {
+      "precision": 0.44680851063829785,
+      "recall": 0.05894736842105263,
+      "f1": 0.1041537507749535
+    },
+    "wall_time": 3.9857468605041504,
+    "real_time_factor": 0.020485314729485574,
+    "peak_rss_mb": 5251.796875,
+    "device": "",
+    "version": "",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_SMF_02_R1_2004_01_05_ORIG_MID__AUDIO_02_R1_2004_08_Track08_wav",
+    "backend": "basic_pitch",
+    "num_gt_notes": 2850,
+    "num_est_notes": 2512,
+    "onset_only": {
+      "precision": 0.6357484076433121,
+      "recall": 0.5603508771929825,
+      "f1": 0.5956732562476688
+    },
+    "onset_offset": {
+      "precision": 0.12460191082802548,
+      "recall": 0.10982456140350877,
+      "f1": 0.11674748228273032
+    },
+    "onset_velocity": {
+      "precision": 0.35429936305732485,
+      "recall": 0.312280701754386,
+      "f1": 0.33196568444610225
+    },
+    "wall_time": 6.763667106628418,
+    "real_time_factor": 0.03476283222543303,
+    "peak_rss_mb": 532.25,
+    "device": "ONNX Runtime (CPU)",
+    "version": "0.4.0",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_SMF_02_R1_2004_01_05_ORIG_MID__AUDIO_02_R1_2004_08_Track08_wav",
+    "backend": "kong",
+    "num_gt_notes": 2850,
+    "num_est_notes": 2853,
+    "onset_only": {
+      "precision": 0.9446196985629163,
+      "recall": 0.9456140350877194,
+      "f1": 0.9451166052954586
+    },
+    "onset_offset": {
+      "precision": 0.27479845776375744,
+      "recall": 0.2750877192982456,
+      "f1": 0.27494301244958796
+    },
+    "onset_velocity": {
+      "precision": 0.9141254819488258,
+      "recall": 0.9150877192982456,
+      "f1": 0.9146063475363844
+    },
+    "wall_time": 80.6648998260498,
+    "real_time_factor": 0.4145887630079049,
+    "peak_rss_mb": 2510.03125,
+    "device": "mps",
+    "version": "0.0.6",
+    "failed": false,
+    "error": null
+  },
+  {
+    "clip": "MIDI_Unprocessed_SMF_02_R1_2004_01_05_ORIG_MID__AUDIO_02_R1_2004_08_Track08_wav",
+    "backend": "transkun",
+    "num_gt_notes": 2850,
+    "num_est_notes": 2737,
+    "onset_only": {
+      "precision": 0.9981731823164048,
+      "recall": 0.9585964912280702,
+      "f1": 0.97798460712368
+    },
+    "onset_offset": {
+      "precision": 0.391669711362806,
+      "recall": 0.376140350877193,
+      "f1": 0.38374798639699303
+    },
+    "onset_velocity": {
+      "precision": 0.9868469126781148,
+      "recall": 0.9477192982456141,
+      "f1": 0.9668874172185431
+    },
+    "wall_time": 22.154979944229126,
+    "real_time_factor": 0.1138686807936336,
+    "peak_rss_mb": 836.4375,
+    "device": "mps",
+    "version": "2.0.1",
+    "failed": false,
+    "error": null
+  }
+]

@@ -165,7 +165,7 @@ def main():
         "device": device,
         "package": "basic-pitch",
         "version": package_version,
-        "wall_time": wall_time
+        "wall_time": str(wall_time)
     }
     
     # Save output

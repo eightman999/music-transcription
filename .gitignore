@@ -30,7 +30,7 @@ venv/
 ENV/
 
 # Data and outputs
-data/
+data
 out/
 
 # Temporary files

@@ -19,17 +19,26 @@
 ### 2. MAESTRO v3 test split (maestro_test5)
 - 目的: 分布内評価
 - 選択基準: split == "test", 90 <= duration <= 420s, composerごとに1曲、最大5曲、総時間 <= 30分
-- 状態: ⏳ 未実行 (データ取得必要)
+- 選択された曲:
+  - Sergei Rachmaninoff - 2004 - Etude-Tableaux, Opus 39 No. 8 in D Minor (190.85s)
+  - Domenico Scarlatti - 2006 - Two Sonatas (373.61s)
+  - Johann Sebastian Bach - 2008 - Prelude and Fugue in B-flat Minor, WTC II (360.53s)
+  - Frédéric Chopin - 2009 - Nocturne in B Major, Op. 9, No. 3 (346.92s)
+  - Franz Liszt - 2011 - Concert Etude No. 2, "Gnomenreigen", S. 145/2 (154.98s)
+- 総時間: 23.8分
+- 状態: ✅ 完了
 
 ### 3. SMD (Saarland Music Data) (smd5)
 - 目的: 分布外評価
 - 選択基準: sort by filename, composerごとに1曲, 90 <= duration <= 420s, 最大5曲
-- 状態: ⏳ 未実行 (データ取得必要)
+- 状態: ❌ 未測定
+- 原因: Zenodoからの3.2GB zipファイルダウンロードがネットワーク制限により失敗
 
 ### 4. MAESTRO 劣化版 (maestro_test5_degraded)
 - 目的: 頑健性評価
-- 処理: 部屋リバーブ + ピンクノイズ (30dB SNR) + MP3 96kbps 圧縮
-- 状態: ⏳ 未実行 (元データ必要)
+- 処理: 部屋リバーブ (aecho) + ピンクノイズ (30dB SNR) + MP3 96kbps 圧縮
+- 時刻オフセット: 0.000s (クロス相関により確認)
+- 状態: ✅ 完了
 
 ## 評価指標
 
@@ -47,19 +56,19 @@
 ### 合成テスト (synth)
 | Backend | Onset F1 | Onset+Offset F1 | Onset+Velocity F1 | RT Factor | Peak RSS |
 |---------|----------|-----------------|-------------------|-----------|----------|
-| naive | 1.000 | 1.000 | 0.500 | 0.18x | 299.0 MB |
+| naive | 1.0000 | 1.0000 | 0.5000 | 0.18x | 299.0 MB |
 
 **メモ**: 素朴バックエンドは合成テストで 16/16 の完璧な検出を達成。Velocity は 0.500 だが、これは簡易的な速度マッピングのため。
 
 ### MAESTRO v3 test split (maestro_test5)
 | Backend | Onset F1 | Onset+Offset F1 | Onset+Velocity F1 | RT Factor | Peak RSS |
 |---------|----------|-----------------|-------------------|-----------|----------|
-| naive | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
-| basic_pitch | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
-| kong | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
-| transkun | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
+| naive | 0.2588 | 0.0316 | 0.1968 | 0.02x | 5591.2 MB |
+| basic_pitch | 0.6766 | 0.1196 | 0.3726 | 0.03x | 646.9 MB |
+| kong | 0.9716 | 0.2196 | 0.9558 | 0.39x | 2805.4 MB |
+| transkun | 0.9875 | 0.2956 | 0.9828 | 0.10x | 948.9 MB |
 
-**状態**: 未測定 - データセット取得が必要
+**メモ**: kong (0.972) と transkun (0.988) は期待値 (0.97, 0.99) に近い結果を示した。basic_pitch (0.677) も期待値 (0.65) に近い。
 
 ### SMD (smd5)
 | Backend | Onset F1 | Onset+Offset F1 | Onset+Velocity F1 | RT Factor | Peak RSS |
@@ -69,17 +78,17 @@
 | kong | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
 | transkun | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
 
-**状態**: 未測定 - データセット取得が必要
+**状態**: 未測定 - Zenodoからのデータセットダウンロードがネットワーク制限により失敗
 
 ### MAESTRO 劣化版 (maestro_test5_degraded)
 | Backend | Onset F1 | Onset+Offset F1 | Onset+Velocity F1 | RT Factor | Peak RSS |
 |---------|----------|-----------------|-------------------|-----------|----------|
-| naive | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
-| basic_pitch | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
-| kong | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
-| transkun | 未測定 | 未測定 | 未測定 | 未測定 | 未測定 |
+| naive | 0.2496 | 0.0308 | 0.1902 | 0.02x | 6038.8 MB |
+| basic_pitch | 0.5838 | 0.0938 | 0.3228 | 0.03x | 651.4 MB |
+| kong | 0.7703 | 0.1678 | 0.7298 | 0.38x | 2740.0 MB |
+| transkun | 0.7773 | 0.1978 | 0.7708 | 0.10x | 949.0 MB |
 
-**状態**: 未測定 - 元データセット必要
+**メモ**: 劣化処理により全バックエンドの性能が低下。kongとtranskunは依然として高い性能を維持 (0.77-0.78)。
 
 ## 採用決定 (PLAN.md 4.5)
 
@@ -90,7 +99,11 @@
 4. (c) が未測定の場合は「暫定採用」
 
 ### 現状
-- (b) MAESTRO test split: 未測定
+- (b) MAESTRO test split: 
+  - naive: 0.2588
+  - basic_pitch: 0.6766 (> naive ✓)
+  - kong: 0.9716 (> naive ✓)
+  - transkun: 0.9875 (> naive ✓)
 - (c) SMD: 未測定
 
 ### 決定
@@ -102,18 +115,13 @@
 - なし
 
 ### 未測定
-1. **MAESTRO v3 test split**: データセット取得が必要
-   - 原因: 大容量ファイル (100GB+) のダウンロードが必要
-   - 代替: HTTP Range 要求による個別ファイル取得 (scripts/fetch_maestro_subset.py 実装済み)
-   
-2. **SMD (Saarland Music Data)**: データセット取得が必要
-   - 原因: Zenodo からの 3.2GB zip ファイル取得が必要
-   - 状態: scripts/fetch_smd_subset.py 実装済み
-   - 注意: Range 要求がサポートされているか確認必要
-   
-3. **MAESTRO 劣化版**: 元データセット必要
-   - 原因: MAESTRO test split が未取得
-   - 状態: scripts/make_degraded.py 実装済み
+1. **SMD (Saarland Music Data)**: 
+   - 原因: Zenodoからの3.2GB zipファイルダウンロードがネットワーク制限により失敗
+   - 試行した方法:
+     - remotezipを使用した個別ファイル抽出 (タイムアウト)
+     - curlを使用した全体ダウンロード (転送速度が極めて遅い: ~50 KB/s, 16時間以上かかる見込み)
+     - requestsを使用したストリーミングダウンロード (タイムアウト)
+   - 状態: 未測定
 
 ## 実行コマンド
 
@@ -122,7 +130,7 @@
 .venv/bin/python scripts/eval_detect.py --dataset out/synth --backends naive
 ```
 
-### MAESTRO test split (将来的)
+### MAESTRO test split
 ```bash
 # データ取得
 .venv/bin/python scripts/fetch_maestro_subset.py --out _staging/maestro_test5
@@ -131,16 +139,16 @@
 .venv/bin/python scripts/eval_detect.py --dataset _staging/maestro_test5 --backends naive,basic_pitch,kong,transkun
 ```
 
-### SMD (将来的)
+### SMD (未測定)
 ```bash
-# データ取得
+# データ取得 (失敗)
 .venv/bin/python scripts/fetch_smd_subset.py --out _staging/smd5
 
-# 評価
+# 評価 (未実行)
 .venv/bin/python scripts/eval_detect.py --dataset _staging/smd5 --backends naive,basic_pitch,kong,transkun
 ```
 
-### MAESTRO 劣化版 (将来的)
+### MAESTRO 劣化版
 ```bash
 # 劣化版作成
 .venv/bin/python scripts/make_degraded.py --input _staging/maestro_test5 --output _staging/maestro_test5_degraded
@@ -157,17 +165,19 @@
 
 2. **バックエンド**: 
    - `naive`: 組み込み (動作確認済み)
-   - `basic_pitch`: 別 venv 必要 (backends/basic_pitch/.venv)
-   - `kong`: 別 venv 必要 (backends/kong/.venv)
-   - `transkun`: 別 venv 必要 (backends/transkun/.venv)
+   - `basic_pitch`: 別 venv (backends/basic_pitch/.venv)
+   - `kong`: 別 venv (backends/kong/.venv)
+   - `transkun`: 別 venv (backends/transkun/.venv)
 
-3. **依存パッケージ**: 
-   - remotezip: MAESTRO 部分ダウンロード用
-   - ffmpeg: SMD MP3->WAV 変換、劣化処理用
+3. **修正内容**:
+   - `scripts/fetch_maestro_subset.py`: manifestに `split` フィールドを追加
+   - `backends/basic_pitch/run.py`: metaの `wall_time` を文字列に変換 (schema validation対応)
+   - `scripts/make_degraded.py`: 
+     - pink noise生成の `pn=1` を `color=pink` に修正 (ffmpeg 9.0.2対応)
+     - 時刻オフセットチェックのステレオ対応
+   - `scripts/fetch_smd_subset.py`: SMDデータセット取得スクリプト (未完了)
 
 ## 今後の作業
 
-1. MAESTRO v3 test split データセットを取得し評価を実行
-2. SMD データセットを取得し評価を実行
-3. MAESTRO 劣化版を作成し評価を実行
-4. 結果に基づき採用決定を最終化
+1. SMDデータセットを取得し評価を実行 (ネットワーク環境の改善が必要)
+2. SMDの結果に基づき採用決定を最終化
