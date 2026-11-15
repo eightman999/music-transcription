@@ -13,6 +13,8 @@ dependencies = [
     "music21>=9.0.0",
     "pytest>=7.4.0",
     "remotezip>=0.13.0",
+    "PyYAML>=6.0.0",
+    "Pillow>=10.0.0",
 ]
 
 [project.optional-dependencies]

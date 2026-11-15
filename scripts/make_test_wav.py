@@ -17,77 +17,7 @@ import soundfile as sf
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mt.schema import save_json
-
-
-def generate_note_waveform(
-    pitch: int,
-    duration: float,
-    fs: int = 44100,
-    velocity: int = 100,
-) -> np.ndarray:
-    """Generate a note with harmonic timbre.
-    
-    Timbre: partials k = 1..6 at k*f0, amplitude 1/k, each with decay exp(-t / (1.2 / k))
-    5 ms linear attack, 30 ms linear release ending exactly at the note offset.
-    Whole note scaled by velocity/127.
-    
-    Args:
-        pitch: MIDI note number
-        duration: Duration in seconds
-        fs: Sample rate
-        velocity: MIDI velocity (1-127)
-    
-    Returns:
-        Audio samples as numpy array
-    """
-    # Convert MIDI pitch to frequency
-    f0 = 440.0 * (2.0 ** ((pitch - 69) / 12.0))
-    
-    # Generate time array
-    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
-    
-    # Scale by velocity
-    amplitude_scale = velocity / 127.0
-    
-    # Generate waveform with harmonics
-    waveform = np.zeros_like(t)
-    
-    for k in range(1, 7):  # k = 1..6
-        # Frequency of k-th partial
-        freq = k * f0
-        
-        # Amplitude: 1/k
-        amp = 1.0 / k
-        
-        # Decay: exp(-t / (1.2 / k))
-        decay = np.exp(-t / (1.2 / k))
-        
-        # Generate harmonic component
-        harmonic = amp * decay * np.sin(2 * np.pi * freq * t)
-        
-        waveform += harmonic
-    
-    # Apply envelope: 5 ms linear attack, 30 ms linear release
-    attack_time = 0.005  # 5 ms
-    release_time = 0.030  # 30 ms
-    
-    envelope = np.ones_like(t)
-    
-    # Attack
-    attack_idx = int(attack_time * fs)
-    if attack_idx > 0:
-        envelope[:attack_idx] = np.linspace(0, 1, attack_idx)
-    
-    # Release - ends exactly at note offset
-    release_start = duration - release_time
-    release_idx = int(release_start * fs)
-    if release_idx < len(t):
-        envelope[release_idx:] = np.linspace(1, 0, len(t) - release_idx)
-    
-    # Apply envelope and scale
-    waveform = amplitude_scale * envelope * waveform
-    
-    return waveform
+from mt.synth import generate_note_waveform, render_notes
 
 
 def generate_test_clip(

@@ -32,6 +32,8 @@ ENV/
 # Data and outputs
 data
 out/
+songs/
+ledger.jsonl
 
 # Temporary files
 tmp/

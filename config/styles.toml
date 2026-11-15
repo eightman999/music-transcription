@@ -1,0 +1,80 @@
+# Style presets — genre and texture fixed upfront; LLM/drafter fills the rest.
+# chords   : chord names cycled one-per-bar
+# sections : form; sum(bars) is the song length
+# vocal_range / lyric_line_range : validator limits
+# accompaniment : "block" (whole-bar chord) or "arp" (8th-note arpeggio)
+# density  : probability an 8th-note slot gets a melody note
+
+[ballad]
+label = "ピアノバラード"
+bpm = 72
+key = "C major"
+beats_per_bar = 4
+vocal_range = [55, 79]
+chords = ["C", "G", "Am", "F"]
+sections = [
+  { name = "intro", bars = 2 },
+  { name = "A", bars = 4 },
+  { name = "B", bars = 4 },
+  { name = "sabi", bars = 8 },
+  { name = "outro", bars = 2 },
+]
+accompaniment = "block"
+density = 0.55
+lyric_line_range = [4, 14]
+mood_keywords = ["疲れ", "悲", "切な", "静か", "夜", "涙", "寂し"]
+
+[pop]
+label = "Jポップ"
+bpm = 118
+key = "C major"
+beats_per_bar = 4
+vocal_range = [57, 81]
+chords = ["C", "G", "Am", "F"]
+sections = [
+  { name = "A", bars = 4 },
+  { name = "B", bars = 4 },
+  { name = "sabi", bars = 8 },
+  { name = "A", bars = 4 },
+  { name = "sabi", bars = 8 },
+]
+accompaniment = "arp"
+density = 0.7
+lyric_line_range = [5, 16]
+mood_keywords = ["楽し", "嬉し", "晴れ", "走", "夏", "元気"]
+
+[emo]
+label = "エモ/ロック"
+bpm = 150
+key = "A minor"
+beats_per_bar = 4
+vocal_range = [55, 79]
+chords = ["Am", "F", "C", "G"]
+sections = [
+  { name = "A", bars = 4 },
+  { name = "B", bars = 4 },
+  { name = "sabi", bars = 8 },
+  { name = "sabi", bars = 8 },
+]
+accompaniment = "arp"
+density = 0.8
+lyric_line_range = [5, 16]
+mood_keywords = ["怒", "悔し", "叫び", "焦", "痛"]
+
+[lofi]
+label = "Lo-fi チル"
+bpm = 80
+key = "F major"
+beats_per_bar = 4
+vocal_range = [53, 74]
+chords = ["Dm7", "G7", "Cmaj7", "Am7"]
+sections = [
+  { name = "intro", bars = 2 },
+  { name = "A", bars = 8 },
+  { name = "sabi", bars = 8 },
+  { name = "outro", bars = 2 },
+]
+accompaniment = "block"
+density = 0.45
+lyric_line_range = [4, 12]
+mood_keywords = ["眠", "まったり", "雨", "カフェ", "朝", "だる"]
